@@ -12,13 +12,23 @@ const loginUser = async (req, res) => {
     if (!user) {
       return res.json({ success: false, message: "User Doesn't exist" });
     }
-    const isMatch =await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.json({ success: false, message: "Invalid Credentials" });
     }
-    const role=user.role;
+    const role = user.role;
     const token = createToken(user._id);
-    res.json({ success: true, token,role });
+    // return basic user data so frontend can prefill profile
+    const userData = {
+      name: user.name,
+      email: user.email,
+      dob: user.dob,
+      address: user.address,
+      gender: user.gender,
+      phone: user.phone,
+      profileImage: user.profileImage,
+    };
+    res.json({ success: true, token, role, data: userData });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: "Error" });
@@ -65,13 +75,53 @@ const registerUser = async (req, res) => {
     });
 
     const user = await newUser.save();
-    const role=user.role;
+    const role = user.role;
     const token = createToken(user._id);
-    res.json({ success: true, token, role});
+    const userData = {
+      name: user.name,
+      email: user.email,
+      dob: user.dob,
+      address: user.address,
+      gender: user.gender,
+      phone: user.phone,
+      profileImage: user.profileImage,
+    };
+    res.json({ success: true, token, role, data: userData });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: "Error" });
   }
 };
 
-export { loginUser, registerUser };
+// get user profile (protected)
+const getProfile = async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const user = await userModel.findById(userId).select("-password");
+    if (!user) return res.json({ success: false, message: "User not found" });
+    res.json({ success: true, data: user });
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false, message: "Error" });
+  }
+};
+
+// update user profile (protected)
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const update = {};
+    // accept only allowed fields
+    const allowed = ["name", "dob", "address", "gender", "phone", "profileImage", "email"];
+    allowed.forEach((f) => {
+      if (req.body[f] !== undefined) update[f] = req.body[f];
+    });
+    const user = await userModel.findByIdAndUpdate(userId, update, { new: true }).select("-password");
+    res.json({ success: true, data: user });
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false, message: "Error" });
+  }
+};
+
+export { loginUser, registerUser, getProfile, updateProfile };
