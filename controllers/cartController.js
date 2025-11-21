@@ -1,51 +1,83 @@
-import userModel from "../models/userModel.js";
+// controllers/cartController.js
+import cartModel from "../models/cartModel.js";
 
-// add items to user cart
-const addToCart = async (req, res) => {
+// Add item to cart
+export const addToCart = async (req, res) => {
   try {
-    let userData = await userModel.findById(req.body.userId);
-    let cartData = await userData.cartData;
-    if (!cartData[req.body.itemId]) {
-      cartData[req.body.itemId] = 1;
-    } else {
-      cartData[req.body.itemId] += 1;
+    const { userID, foodID, quantity } = req.body;
+
+    let cart = await cartModel.findOne({ userID });
+
+    // If cart doesn't exist → create a new one
+    if (!cart) {
+      cart = new cartModel({
+        userID,
+        items: [{ foodID, quantity: quantity || 1 }]
+      });
+      await cart.save();
+      return res.json({ success: true, message: "Item added to cart." });
     }
-    await userModel.findByIdAndUpdate(req.body.userId, { cartData });
-    res.json({ success: true, message: "Added to Cart" });
-  } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: "Error" });
-  }
-};
 
-// remove from cart
-const removeFromCart = async (req, res) => {
-  try {
-    let userData = await userModel.findById(req.body.userId);
-    let cartData = await userData.cartData;
-    if (cartData[req.body.itemId] > 1) {
-      cartData[req.body.itemId] -= 1;
+    // If cart exists → update quantity
+    const item = cart.items.find((i) => i.foodID === foodID);
+
+    if (item) {
+      item.quantity += quantity || 1;
     } else {
-      delete cartData[req.body.itemId];
+      cart.items.push({ foodID, quantity: quantity || 1 });
     }
-    await userModel.findByIdAndUpdate(req.body.userId, { cartData });
-    res.json({ success: true, message: "Removed from Cart" });
+
+    await cart.save();
+    res.json({ success: true, message: "Item added to cart." });
+
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: "Error" });
+    console.error(error);
+    res.json({ success: false, message: "Error adding item to cart." });
   }
 };
 
-// fetch user cart data
-const getCart = async (req, res) => {
+// Remove item (or reduce quantity)
+export const removeFromCart = async (req, res) => {
   try {
-    let userData = await userModel.findById(req.body.userId);
-    let cartData = await userData.cartData;
-    res.json({ success: true, cartData: cartData });
+    const { userID, foodID } = req.body;
+
+    const cart = await cartModel.findOne({ userID });
+    if (!cart) return res.json({ success: false, message: "Cart not found." });
+
+    const item = cart.items.find((i) => i.foodID === foodID);
+
+    if (!item)
+      return res.json({ success: false, message: "Item not in cart." });
+
+    if (item.quantity > 1) {
+      item.quantity -= 1;
+    } else {
+      cart.items = cart.items.filter((i) => i.foodID !== foodID);
+    }
+
+    await cart.save();
+    res.json({ success: true, message: "Item removed from cart." });
+
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: "Error" });
+    console.error(error);
+    res.json({ success: false, message: "Error removing item." });
   }
 };
 
-export { addToCart, removeFromCart, getCart };
+// Get user's cart
+export const getCart = async (req, res) => {
+  try {
+    const { userID } = req.body;
+
+    const cart = await cartModel.findOne({ userID });
+
+    res.json({
+      success: true,
+      cartData: cart ? cart.items : []
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: "Error fetching cart." });
+  }
+};

@@ -4,10 +4,11 @@ import auth from "../middleware/auth.js";
 
 const userRouter = express.Router();
 
+// Register / Login
 userRouter.post("/register", registerUser);
 userRouter.post("/login", loginUser);
 
-// protected profile routes
+// Protected routes
 userRouter.get("/profile", auth, getProfile);
 userRouter.put("/profile", auth, updateProfile);
 

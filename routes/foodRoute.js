@@ -5,8 +5,7 @@ import authMiddleware from "../middleware/auth.js";
 
 const foodRouter = express.Router();
 
-// Image Storage Engine
-
+// Image storage config
 const storage= multer.diskStorage({
     destination:"uploads",
     filename:(req,file,cb)=>{
@@ -14,10 +13,10 @@ const storage= multer.diskStorage({
     }
 })
 
-const upload= multer({storage:storage})
+const upload = multer({ storage });
 
-foodRouter.post("/add",upload.single("image"),authMiddleware,addFood);
-foodRouter.get("/list",listFood);
-foodRouter.post("/remove",authMiddleware,removeFood);
+foodRouter.post("/add", upload.single("image"), authMiddleware, addFood);
+foodRouter.get("/list", listFood);
+foodRouter.post("/remove", authMiddleware, removeFood);
 
 export default foodRouter;

@@ -1,59 +1,64 @@
 import foodModel from "../models/foodModel.js";
-import userModel from "../models/userModel.js";
+import sellerModel from "../models/sellerModel.js";
 import fs from "fs";
 
-// add food items
-
-const addFood = async (req, res) => {
-  let image_filename = `${req.file.filename}`;
-  const food = new foodModel({
-    name: req.body.name,
-    description: req.body.description,
-    price: req.body.price,
-    category: req.body.category,
-    image: image_filename,
-  });
+// Seller adds a new food item
+export const addFood = async (req, res) => {
   try {
-    let userData = await userModel.findById(req.body.userId);
-    if (userData && userData.role === "admin") {
-      await food.save();
-      res.json({ success: true, message: "Food Added" });
-    } else {
-      res.json({ success: false, message: "You are not admin" });
+    const { sellerID, foodName, description, price, category } = req.body;
+
+    const seller = await sellerModel.findOne({ sellerID });
+    if (!seller) {
+      return res.json({ success: false, message: "Seller not found." });
     }
+
+    const food = new foodModel({
+      foodID: "F" + Date.now(),
+      sellerID,
+      foodName,
+      description,
+      price,
+      category,
+      foodImage: req.file.filename
+    });
+
+    await food.save();
+    res.json({ success: true, message: "Food added successfully." });
+
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: "Error" });
+    console.error(error);
+    res.json({ success: false, message: "Error adding food." });
   }
 };
 
-// all foods
-const listFood = async (req, res) => {
+// List all foods
+export const listFood = async (req, res) => {
   try {
     const foods = await foodModel.find({});
     res.json({ success: true, data: foods });
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: "Error" });
+    console.error(error);
+    res.json({ success: false, message: "Error fetching foods." });
   }
 };
 
-// remove food item
-const removeFood = async (req, res) => {
+// Remove a food item
+export const removeFood = async (req, res) => {
   try {
-    let userData = await userModel.findById(req.body.userId);
-    if (userData && userData.role === "admin") {
-      const food = await foodModel.findById(req.body.id);
-      fs.unlink(`uploads/${food.image}`, () => {});
-      await foodModel.findByIdAndDelete(req.body.id);
-      res.json({ success: true, message: "Food Removed" });
-    } else {
-      res.json({ success: false, message: "You are not admin" });
+    const { foodID, sellerID } = req.body;
+
+    const food = await foodModel.findOne({ foodID, sellerID });
+    if (!food) {
+      return res.json({ success: false, message: "Food not found." });
     }
+
+    fs.unlink(`uploads/${food.foodImage}`, () => {});
+    await foodModel.findOneAndDelete({ foodID, sellerID });
+
+    res.json({ success: true, message: "Food removed." });
+
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: "Error" });
+    console.error(error);
+    res.json({ success: false, message: "Error removing food." });
   }
 };
-
-export { addFood, listFood, removeFood };
