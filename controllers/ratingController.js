@@ -1,10 +1,10 @@
-import FoodRating from "../models/foodRatingModel.js";
+import RatingModel from "../models/ratingModel.js";
 
 export const rateFood = async (req, res) => {
   try {
     const { userID, foodID, rating, comment } = req.body;
 
-    const newRating = new FoodRating({
+    const newRating = new RatingModel({
       ratingID: "RT" + Date.now(),
       userID,
       foodID,

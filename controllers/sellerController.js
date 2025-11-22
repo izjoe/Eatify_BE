@@ -1,7 +1,7 @@
 // controllers/sellerController.js
 import sellerModel from "../models/sellerModel.js";
 import foodModel from "../models/foodModel.js";
-import foodRatingModel from "../models/foodRatingModel.js";
+import ratingModel from "../models/ratingModel.js";
 
 // Get seller detail (including foods + average rating)
 export const getSellerDetail = async (req, res) => {
@@ -23,7 +23,7 @@ export const getSellerDetail = async (req, res) => {
     let totalReviews = 0;
 
     if (foodIDs.length > 0) {
-      const ratingSummary = await foodRatingModel.aggregate([
+  const ratingSummary = await ratingModel.aggregate([
         { $match: { foodID: { $in: foodIDs } } },
         {
           $group: {

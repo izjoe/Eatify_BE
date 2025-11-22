@@ -1,5 +1,5 @@
 import Order from "../models/orderModel.js";
-import FoodRating from "../models/foodRatingModel.js";
+import RatingModel from "../models/ratingModel.js";
 
 export const canRateFood = async (req, res, next) => {
   try {
@@ -35,7 +35,7 @@ export const canRateFood = async (req, res, next) => {
     }
 
     // Check whether user already rated this food before
-    const alreadyRated = await FoodRating.findOne({ userID, foodID });
+  const alreadyRated = await RatingModel.findOne({ userID, foodID });
 
     if (alreadyRated) {
       return res.status(400).json({

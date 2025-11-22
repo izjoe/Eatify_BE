@@ -1,7 +1,7 @@
 import express from "express";
 import { canRateFood } from "../middleware/rateFoodMiddleware.js";
 import auth from "../middleware/auth.js";
-import { rateFood } from "../controllers/foodRatingController.js";
+import { rateFood } from "../controllers/ratingController.js";
 
 const router = express.Router();
 
