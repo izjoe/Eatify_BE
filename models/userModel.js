@@ -12,9 +12,9 @@ const userSchema = new mongoose.Schema(
     // Profile fields
     name: { type: String },
     address: { type: String },
-    phoneNumber: { type: String },
+    phoneNumber: { type: String, match: [/^\+84\d{9}$/, 'Phone must be in +84XXXXXXXXX format'] },
     dob: { type: Date },
-    gender: { type: String },
+    gender: { type: String, enum: ["Male", "Female", "Other"] },
     profileImage: { type: String },
   },
   { timestamps: true // Auto add createdAt & updatedAt

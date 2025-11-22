@@ -4,30 +4,23 @@ const orderItemSchema = new mongoose.Schema({
   foodID: { type: String, required: true },
   foodName: { type: String, required: true },
   quantity: { type: Number, required: true, min: 1 },
-  price: { type: Number, required: true },
-  subtotal: { type: Number, required: true }
+  price: { type: Number, required: true }
 });
 
 const orderSchema = new mongoose.Schema(
   {
     orderID: { type: String, required: true, unique: true },
     userID: { type: String, required: true },
-
     items: [orderItemSchema],
-
     totalPrice: { type: Number, required: true },
     deliveryAddress: { type: String, required: true },
     phone: { type: String, required: true },
-
-    // NEW: Payment + Status
     isPaid: { type: Boolean, default: false },
-
     orderStatus: {
       type: String,
       enum: ["pending", "preparing", "shipping", "completed", "canceled"],
       default: "pending"
     },
-
     note: { type: String }
   },
   { timestamps: true }

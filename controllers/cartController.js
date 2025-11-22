@@ -1,10 +1,17 @@
 // controllers/cartController.js
 import cartModel from "../models/cartModel.js";
+import userModel from "../models/userModel.js";
 
 // Add item to cart
 export const addToCart = async (req, res) => {
   try {
-    const { userID, foodID, quantity } = req.body;
+    const { foodID, quantity } = req.body;
+    const userId = req.body.userId; // from auth middleware
+
+    // Get user's userID from the database
+    const user = await userModel.findById(userId);
+    if (!user) return res.json({ success: false, message: "User not found" });
+    const userID = user.userID;
 
     let cart = await cartModel.findOne({ userID });
 
@@ -39,7 +46,13 @@ export const addToCart = async (req, res) => {
 // Remove item (or reduce quantity)
 export const removeFromCart = async (req, res) => {
   try {
-    const { userID, foodID } = req.body;
+    const { foodID } = req.body;
+    const userId = req.body.userId; // from auth middleware
+
+    // Get user's userID from the database
+    const user = await userModel.findById(userId);
+    if (!user) return res.json({ success: false, message: "User not found" });
+    const userID = user.userID;
 
     const cart = await cartModel.findOne({ userID });
     if (!cart) return res.json({ success: false, message: "Cart not found." });
@@ -67,7 +80,12 @@ export const removeFromCart = async (req, res) => {
 // Get user's cart
 export const getCart = async (req, res) => {
   try {
-    const { userID } = req.body;
+    const userId = req.body.userId; // from auth middleware
+
+    // Get user's userID from the database
+    const user = await userModel.findById(userId);
+    if (!user) return res.json({ success: false, message: "User not found" });
+    const userID = user.userID;
 
     const cart = await cartModel.findOne({ userID });
 

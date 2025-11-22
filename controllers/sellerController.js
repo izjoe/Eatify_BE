@@ -2,6 +2,7 @@
 import sellerModel from "../models/sellerModel.js";
 import foodModel from "../models/foodModel.js";
 import ratingModel from "../models/ratingModel.js";
+import userModel from "../models/userModel.js";
 
 // Get seller detail (including foods + average rating)
 export const getSellerDetail = async (req, res) => {
@@ -70,18 +71,36 @@ export const listSellers = async (req, res) => {
 // Update seller store info
 export const updateSellerInfo = async (req, res) => {
   try {
-    const { userID, storeName, storeDescription, storeAddress, storeImage, categories } = req.body;
+    const { storeName, storeDescription, storeAddress, storeImage, categories, openTime, closeTime } = req.body;
+    const userId = req.body.userId; // from auth middleware
+
+    // Get user's userID from the database
+    const user = await userModel.findOne({ _id: userId });
+    if (!user) return res.json({ success: false, message: "User not found" });
+    const userID = user.userID;
 
     const seller = await sellerModel.findOne({ userID });
     if (!seller) {
       return res.json({ success: false, message: "Seller not found." });
     }
 
-    if (storeName) seller.storeName = storeName;
-    if (storeDescription) seller.storeDescription = storeDescription;
-    if (storeAddress) seller.storeAddress = storeAddress;
-    if (storeImage) seller.storeImage = storeImage;
-    if (categories) seller.categories = categories;
+    // Validate time format if provided (hh:mm 24-hour format)
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (openTime !== undefined && !timeRegex.test(openTime)) {
+      return res.json({ success: false, message: "openTime must be in hh:mm format (24-hour), e.g., 08:30 or 14:00" });
+    }
+    if (closeTime !== undefined && !timeRegex.test(closeTime)) {
+      return res.json({ success: false, message: "closeTime must be in hh:mm format (24-hour), e.g., 20:00 or 22:30" });
+    }
+
+    // Note: sellerID and userID are system-managed and cannot be changed
+    if (storeName !== undefined) seller.storeName = storeName; // Can have spaces, can duplicate
+    if (storeDescription !== undefined) seller.storeDescription = storeDescription;
+    if (storeAddress !== undefined) seller.storeAddress = storeAddress;
+    if (storeImage !== undefined) seller.storeImage = storeImage;
+    if (categories !== undefined) seller.categories = categories;
+    if (openTime !== undefined) seller.openTime = openTime;
+    if (closeTime !== undefined) seller.closeTime = closeTime;
 
     await seller.save();
 

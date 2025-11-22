@@ -2,28 +2,59 @@
 import orderModel from "../models/orderModel.js";
 import cartModel from "../models/cartModel.js";
 import userModel from "../models/userModel.js";
+import foodModel from "../models/foodModel.js";
 
 // Create order from cart
 export const checkoutOrder = async (req, res) => {
   try {
-    const { userID, deliveryAddress, phone } = req.body;
+    const userId = req.body.userId; // from auth middleware
+
+    // Get user's userID from the database
+    const user = await userModel.findById(userId);
+    if (!user) return res.json({ success: false, message: "User not found" });
+    const userID = user.userID;
+
+    // Auto-get delivery address and phone from user profile
+    if (!user.address || !user.phoneNumber) {
+      return res.json({ 
+        success: false, 
+        message: "Please complete your profile (address and phone number) before ordering." 
+      });
+    }
 
     const cart = await cartModel.findOne({ userID });
     if (!cart || cart.items.length === 0) {
       return res.json({ success: false, message: "Cart is empty." });
     }
 
+    // Fetch food details and calculate prices
+    const orderItems = [];
+    let totalPrice = 0;
+
+    for (const cartItem of cart.items) {
+      const food = await foodModel.findOne({ foodID: cartItem.foodID });
+      if (!food) {
+        return res.json({ success: false, message: `Food ${cartItem.foodID} not found.` });
+      }
+      
+      const itemPrice = food.price * cartItem.quantity;
+      totalPrice += itemPrice;
+
+      orderItems.push({
+        foodID: cartItem.foodID,
+        foodName: food.foodName,
+        quantity: cartItem.quantity,
+        price: food.price
+      });
+    }
+
     const order = new orderModel({
       orderID: "O" + Date.now(),
       userID,
-      items: cart.items.map((i) => ({
-        foodID: i.foodID,
-        quantity: i.quantity,
-        subtotal: 0
-      })),
-      totalPrice: 0,
-      deliveryAddress,
-      phone,
+      items: orderItems,
+      totalPrice,
+      deliveryAddress: user.address,
+      phone: user.phoneNumber,
       isPaid: false,
       orderStatus: "pending"
     });
@@ -34,7 +65,7 @@ export const checkoutOrder = async (req, res) => {
     cart.items = [];
     await cart.save();
 
-    res.json({ success: true, message: "Order placed successfully.", orderID: order.orderID });
+    res.json({ success: true, message: "Order placed successfully.", orderID: order.orderID, totalPrice });
 
   } catch (error) {
     console.error(error);
@@ -60,20 +91,27 @@ export const updateStatus = async (req, res) => {
   }
 };
 
-// Verify payment (set isPaid = true)
+// Verify payment (set isPaid = true) - ADMIN ONLY
 export const verifyOrder = async (req, res) => {
   try {
     const { orderID, status } = req.body;
+    const userId = req.body.userId; // from auth middleware
+
+    // Check if user is admin
+    const user = await userModel.findById(userId);
+    if (!user || user.role !== "admin") {
+      return res.json({ success: false, message: "Admin access required to verify payment." });
+    }
 
     if (status === "success") {
       await orderModel.findOneAndUpdate(
         { orderID },
         { isPaid: true, orderStatus: "preparing" }
       );
-      return res.json({ success: true, message: "Payment successful." });
+      return res.json({ success: true, message: "Payment verified successfully." });
     }
 
-    res.json({ success: false, message: "Payment failed." });
+    res.json({ success: false, message: "Payment verification failed." });
 
   } catch (error) {
     console.error(error);
@@ -84,7 +122,13 @@ export const verifyOrder = async (req, res) => {
 // Get orders of a user
 export const userOrders = async (req, res) => {
   try {
-    const { userID } = req.body;
+    const userId = req.body.userId; // from auth middleware
+
+    // Get user's userID from the database
+    const user = await userModel.findById(userId);
+    if (!user) return res.json({ success: false, message: "User not found" });
+    const userID = user.userID;
+
     const orders = await orderModel.find({ userID });
     res.json({ success: true, data: orders });
   } catch (error) {
@@ -96,7 +140,8 @@ export const userOrders = async (req, res) => {
 // Admin: list all orders
 export const listOrders = async (req, res) => {
   try {
-    const users = await userModel.findById(req.body.userID);
+    const userId = req.body.userId; // from auth middleware
+    const users = await userModel.findById(userId);
     if (!users || users.role !== "admin") {
       return res.json({ success: false, message: "Admin access required." });
     }

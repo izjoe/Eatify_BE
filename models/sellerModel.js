@@ -9,8 +9,8 @@ const sellerSchema = new mongoose.Schema(
     storeAddress: { type: String, required: true },
     storeImage: { type: String },
     categories: { type: [String], required: true },
-    openTime: { type: String },
-    closeTime: { type: String },
+    openTime: { type: String, match: [/^([01]\d|2[0-3]):([0-5]\d)$/, 'openTime must be in hh:mm format (24-hour)'] },
+    closeTime: { type: String, match: [/^([01]\d|2[0-3]):([0-5]\d)$/, 'closeTime must be in hh:mm format (24-hour)'] },
     isActive: { type: Boolean, default: true }
   },
   { timestamps: true }

@@ -1,13 +1,20 @@
 import Order from "../models/orderModel.js";
 import RatingModel from "../models/ratingModel.js";
+import userModel from "../models/userModel.js";
 
 export const canRateFood = async (req, res, next) => {
   try {
-    const { userID, foodID } = req.body;
+    const { foodID } = req.body;
+    const userId = req.body.userId; // from auth middleware
 
-    if (!userID || !foodID) {
-      return res.status(400).json({ message: "Missing userID or foodID." });
+    if (!userId || !foodID) {
+      return res.status(400).json({ message: "Missing userId or foodID." });
     }
+
+    // Get user's userID from the database
+    const user = await userModel.findById(userId);
+    if (!user) return res.status(400).json({ message: "User not found" });
+    const userID = user.userID;
 
     // Check whether user has ever bought this food
     const hasBought = await Order.findOne({

@@ -45,10 +45,4 @@ app.listen(port, () => {
   console.log(`Server started on http://localhost:${port}`);
 });
 
-// mongodb+srv://23521031_db_user:vDcHMDognC7DbcHZ@cluster0.eeujscv.mongodb.net/?appName=Cluster0
-
-// hatecode --- LmhO4lYrdWvZ8T1H
-
-// mongodb+srv://23521031_db_user:LmhO4lYrdWvZ8T1H@cluster0.eeujscv.mongodb.net/test?appName=Cluster0
-
-// admin01 --- h4y0qyRz8lP1fOs0
+const uri = 'mongodb+srv://23521031_db_user:YeIfwB5jdLfbT7Ab@cluster0.eeujscv.mongodb.net/rating';
