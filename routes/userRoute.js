@@ -34,7 +34,7 @@ const userRouter = express.Router();
 
 /**
  * @swagger
- * /user/register:
+ * /api/user/register:
  *   post:
  *     summary: Register a new user
  *     tags: [Auth]
@@ -52,21 +52,59 @@ const userRouter = express.Router();
  *               name:
  *                 type: string
  *                 example: Nguyen Ngoc
+ *                 description: Full name of the user
  *               email:
  *                 type: string
+ *                 format: email
  *                 example: ngoc@gmail.com
+ *                 description: Valid email address
  *               password:
  *                 type: string
- *                 example: "123456"
+ *                 example: "Password123"
+ *                 description: Password (min 8 chars, must contain uppercase, lowercase, and numbers)
+ *               phoneNumber:
+ *                 type: string
+ *                 example: "+84123456789"
+ *                 description: Phone number in +84XXXXXXXXX format (optional)
+ *               dob:
+ *                 type: string
+ *                 example: "15-01-1990"
+ *                 description: Date of birth in dd-mm-yyyy format (optional)
+ *               gender:
+ *                 type: string
+ *                 enum: [Male, Female, Other]
+ *                 example: Male
+ *                 description: Gender (optional)
+ *               address:
+ *                 type: string
+ *                 example: "123 Main Street, Ho Chi Minh City"
+ *                 description: Home address (optional)
  *     responses:
  *       200:
- *         description: Register success
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 msg:
+ *                   type: string
+ *                   example: Register success
+ *                 token:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                   example: user
+ *                 userID:
+ *                   type: string
+ *       400:
+ *         description: Validation error or email already exists
  */
 userRouter.post("/register", registerUser);
 
 /**
  * @swagger
- * /user/login:
+ * /api/user/login:
  *   post:
  *     summary: Login user
  *     tags: [Auth]
@@ -82,19 +120,42 @@ userRouter.post("/register", registerUser);
  *             properties:
  *               email:
  *                 type: string
+ *                 format: email
  *                 example: ngoc@gmail.com
+ *                 description: Registered email address
  *               password:
  *                 type: string
- *                 example: "123456"
+ *                 example: "Password123"
+ *                 description: User password
  *     responses:
  *       200:
- *         description: Login success
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 msg:
+ *                   type: string
+ *                   example: Login success
+ *                 token:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                   example: user
+ *                 userID:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                   example: Nguyen Ngoc
+ *       401:
+ *         description: Invalid credentials
  */
 userRouter.post("/login", loginUser);
 
 /**
  * @swagger
- * /user/profile:
+ * /api/user/profile:
  *   get:
  *     summary: Get user profile
  *     tags: [User]
@@ -102,13 +163,45 @@ userRouter.post("/login", loginUser);
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Profile fetched
+ *         description: Profile fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                       example: Nguyen Ngoc
+ *                     email:
+ *                       type: string
+ *                       example: ngoc@gmail.com
+ *                     role:
+ *                       type: string
+ *                       example: user
+ *                     address:
+ *                       type: string
+ *                     phoneNumber:
+ *                       type: string
+ *                     dob:
+ *                       type: string
+ *                     gender:
+ *                       type: string
+ *                     profileImage:
+ *                       type: string
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
  */
 userRouter.get("/profile", auth, getProfile);
 
 /**
  * @swagger
- * /user/profile:
+ * /api/user/profile:
  *   put:
  *     summary: Update user profile
  *     tags: [User]
@@ -176,7 +269,7 @@ userRouter.put("/profile", auth, validate(updateUserSchema), updateProfile);
 
 /**
  * @swagger
- * /user/admin/update-role:
+ * /api/user/admin/update-role:
  *   put:
  *     summary: Admin updates user's role
  *     tags: [Admin]
@@ -217,7 +310,7 @@ userRouter.put(
 
 /**
  * @swagger
- * /user/admin/update-user:
+ * /api/user/admin/update-user:
  *   put:
  *     summary: Admin updates user details
  *     tags: [Admin]
