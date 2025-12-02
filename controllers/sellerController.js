@@ -77,11 +77,21 @@ export const updateSellerInfo = async (req, res) => {
     // Get user's userID from the database
     const user = await userModel.findOne({ _id: userId });
     if (!user) return res.json({ success: false, message: "User not found" });
+    
+    // SECURITY: Only sellers can update store info
+    if (user.role !== "seller" && user.role !== "admin") {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Access denied. Seller privileges required." 
+      });
+    }
+    
     const userID = user.userID;
 
+    // SECURITY: Seller can only update THEIR OWN store
     const seller = await sellerModel.findOne({ userID });
     if (!seller) {
-      return res.json({ success: false, message: "Seller not found." });
+      return res.json({ success: false, message: "Seller profile not found." });
     }
 
     // Validate time format if provided (hh:mm 24-hour format)

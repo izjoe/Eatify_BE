@@ -1,15 +1,280 @@
+// routes/userRoute.js
 import express from "express";
-import { loginUser, registerUser, getProfile, updateProfile } from "../controllers/userController.js";
-import auth from "../middleware/auth.js";
+import { validate } from "../middleware/validateMiddleware.js";
+import {
+  updateUserSchema
+} from "../validations/userValidation.js";
+import {
+  updateUserRoleSchema,
+  adminUpdateUserSchema
+} from "../validations/adminValidation.js";
+import auth, { requireAdmin } from "../middleware/authMiddleware.js";
+
+import {
+  loginUser,
+  registerUser,
+  getProfile,
+  updateProfile,
+  adminUpdateUser,
+  adminUpdateRole
+} from "../controllers/userController.js";
 
 const userRouter = express.Router();
 
-// Register / Login
+/**
+ * @swagger
+ * tags:
+ *   - name: Auth
+ *     description: User authentication
+ *   - name: User
+ *     description: User profile
+ *   - name: Admin
+ *     description: Admin user management
+ */
+
+/**
+ * @swagger
+ * /user/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Nguyen Ngoc
+ *               email:
+ *                 type: string
+ *                 example: ngoc@gmail.com
+ *               password:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: Register success
+ */
 userRouter.post("/register", registerUser);
+
+/**
+ * @swagger
+ * /user/login:
+ *   post:
+ *     summary: Login user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: ngoc@gmail.com
+ *               password:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: Login success
+ */
 userRouter.post("/login", loginUser);
 
-// Protected routes
+/**
+ * @swagger
+ * /user/profile:
+ *   get:
+ *     summary: Get user profile
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile fetched
+ */
 userRouter.get("/profile", auth, getProfile);
-userRouter.put("/profile", auth, updateProfile);
+
+/**
+ * @swagger
+ * /user/profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: John Doe Updated
+ *                 description: User's full name
+ *               userName:
+ *                 type: string
+ *                 example: johndoe_123
+ *                 description: Username (letters, numbers, underscores only)
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: newemail@example.com
+ *                 description: Email address
+ *               address:
+ *                 type: string
+ *                 example: "456 New Street, District 1"
+ *                 description: Home address
+ *               phoneNumber:
+ *                 type: string
+ *                 example: "+84987654321"
+ *                 description: Phone number in +84XXXXXXXXX format
+ *               dob:
+ *                 type: string
+ *                 example: "20-05-1995"
+ *                 description: Date of birth in dd-mm-yyyy format
+ *               gender:
+ *                 type: string
+ *                 enum: [Male, Female, Other]
+ *                 example: Female
+ *                 description: Gender
+ *               profileImage:
+ *                 type: string
+ *                 example: "profile_123.jpg"
+ *                 description: Profile image filename
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   description: Updated user profile data
+ *       400:
+ *         description: Validation error
+ */
+userRouter.put("/profile", auth, validate(updateUserSchema), updateProfile);
+
+/**
+ * @swagger
+ * /user/admin/update-role:
+ *   put:
+ *     summary: Admin updates user's role
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - targetUserId
+ *               - newRole
+ *             properties:
+ *               targetUserId:
+ *                 type: string
+ *                 example: "507f1f77bcf86cd799439011"
+ *                 description: MongoDB _id of the target user
+ *               newRole:
+ *                 type: string
+ *                 enum: [user, seller, admin]
+ *                 example: seller
+ *                 description: New role to assign
+ *     responses:
+ *       200:
+ *         description: User role updated successfully
+ *       403:
+ *         description: Access denied - Admin privileges required
+ */
+userRouter.put(
+  "/admin/update-role",
+  auth,
+  requireAdmin,
+  validate(updateUserRoleSchema),
+  adminUpdateRole
+);
+
+/**
+ * @swagger
+ * /user/admin/update-user:
+ *   put:
+ *     summary: Admin updates user details
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - targetUserId
+ *             properties:
+ *               targetUserId:
+ *                 type: string
+ *                 example: "507f1f77bcf86cd799439011"
+ *                 description: MongoDB _id of the target user
+ *               name:
+ *                 type: string
+ *                 example: John Smith
+ *                 description: User's full name
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: johnsmith@example.com
+ *                 description: Email address
+ *               address:
+ *                 type: string
+ *                 example: "789 Admin Street"
+ *                 description: Home address
+ *               phoneNumber:
+ *                 type: string
+ *                 example: "+84123123123"
+ *                 description: Phone number in +84XXXXXXXXX format
+ *               dob:
+ *                 type: string
+ *                 example: "10-10-1990"
+ *                 description: Date of birth in dd-mm-yyyy format
+ *               gender:
+ *                 type: string
+ *                 enum: [Male, Female, Other]
+ *                 example: Male
+ *                 description: Gender
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *       403:
+ *         description: Access denied - Admin privileges required
+ */
+
+userRouter.put(
+  "/admin/update-user",
+  auth,
+  requireAdmin,
+  validate(adminUpdateUserSchema),
+  adminUpdateUser
+);
 
 export default userRouter;

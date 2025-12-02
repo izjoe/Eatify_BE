@@ -9,37 +9,51 @@ export const addFood = async (req, res) => {
     const { foodName, description, price, category } = req.body;
     const userId = req.body.userId; // from auth middleware
 
-    // Get user's userID from the database
+    // Validate required file
+    if (!req.file) {
+      return res.json({ success: false, message: "Food image is required." });
+    }
+
+    // Get user from database
     const user = await userModel.findById(userId);
     if (!user) return res.json({ success: false, message: "User not found" });
+    
+    // Check if user is a seller
+    if (user.role !== "seller") {
+      return res.json({ success: false, message: "Only sellers can add food." });
+    }
+
     const userID = user.userID;
 
     // Find seller by userID
     const seller = await sellerModel.findOne({ userID });
     if (!seller) {
-      return res.json({ success: false, message: "Seller not found. Only sellers can add food." });
+      return res.json({ success: false, message: "Seller profile not found." });
     }
+    
     const sellerID = seller.sellerID;
-    if (!seller) {
-      return res.json({ success: false, message: "Seller not found." });
-    }
+
+    // Generate unique foodID with random component to avoid collisions
+    const foodID = `F${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
     const food = new foodModel({
-      foodID: "F" + Date.now(),
+      foodID,
       sellerID,
       foodName,
       description,
-      price,
+      price: Number(price),
       category,
-      foodImage: req.file.filename
+      foodImage: req.file.filename,
+      stock: 0, // Default stock
+      isAvailable: true
     });
 
     await food.save();
-    res.json({ success: true, message: "Food added successfully." });
+    res.json({ success: true, message: "Food added successfully.", foodID });
 
   } catch (error) {
     console.error(error);
-    res.json({ success: false, message: "Error adding food." });
+    res.json({ success: false, message: "Error adding food.", error: error.message });
   }
 };
 
@@ -60,9 +74,10 @@ export const removeFood = async (req, res) => {
     const { foodID } = req.body;
     const userId = req.body.userId; // from auth middleware
 
-    // Get user's userID from the database
+    // Get user from database
     const user = await userModel.findById(userId);
     if (!user) return res.json({ success: false, message: "User not found" });
+    
     const userID = user.userID;
 
     // Find seller by userID
@@ -72,18 +87,23 @@ export const removeFood = async (req, res) => {
     }
     const sellerID = seller.sellerID;
 
+    // SECURITY: Check ownership - seller can only delete their own food
     const food = await foodModel.findOne({ foodID, sellerID });
     if (!food) {
-      return res.json({ success: false, message: "Food not found." });
+      return res.json({ success: false, message: "Food not found or you don't have permission to delete it." });
     }
 
-    fs.unlink(`uploads/${food.foodImage}`, () => {});
+    // Delete image file
+    fs.unlink(`uploads/${food.foodImage}`, (err) => {
+      if (err) console.error("Error deleting image:", err);
+    });
+    
     await foodModel.findOneAndDelete({ foodID, sellerID });
 
-    res.json({ success: true, message: "Food removed." });
+    res.json({ success: true, message: "Food removed successfully." });
 
   } catch (error) {
     console.error(error);
-    res.json({ success: false, message: "Error removing food." });
+    res.json({ success: false, message: "Error removing food.", error: error.message });
   }
 };

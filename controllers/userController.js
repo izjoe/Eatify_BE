@@ -210,4 +210,119 @@ const updateProfile = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser, getProfile, updateProfile };
+// Admin: Update user's role (admin only)
+const adminUpdateRole = async (req, res) => {
+  try {
+    const userId = req.body.userId; // from auth middleware (admin's ID)
+    const { targetUserId, newRole } = req.body;
+
+    // Verify admin
+    const admin = await userModel.findById(userId);
+    if (!admin || admin.role !== "admin") {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Access denied. Admin privileges required." 
+      });
+    }
+
+    // Validate role
+    const allowedRoles = ["user", "seller", "admin"];
+    if (!allowedRoles.includes(newRole)) {
+      return res.json({ 
+        success: false, 
+        message: "Invalid role. Allowed: user, seller, admin" 
+      });
+    }
+
+    // Find target user
+    const targetUser = await userModel.findById(targetUserId);
+    if (!targetUser) {
+      return res.json({ success: false, message: "Target user not found" });
+    }
+
+    // Prevent admin from demoting themselves
+    if (userId === targetUserId && newRole !== "admin") {
+      return res.json({ 
+        success: false, 
+        message: "You cannot change your own admin role" 
+      });
+    }
+
+    // Update role
+    targetUser.role = newRole;
+    await targetUser.save();
+
+    res.json({ 
+      success: true, 
+      message: `User role updated to ${newRole}`,
+      data: { userID: targetUser.userID, role: targetUser.role }
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false, message: "Error updating role" });
+  }
+};
+
+// Admin: Update any user's profile (admin only)
+const adminUpdateUser = async (req, res) => {
+  try {
+    const userId = req.body.userId; // from auth middleware (admin's ID)
+    const { targetUserId, ...updateFields } = req.body;
+
+    // Verify admin
+    const admin = await userModel.findById(userId);
+    if (!admin || admin.role !== "admin") {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Access denied. Admin privileges required." 
+      });
+    }
+
+    // Find target user
+    const targetUser = await userModel.findById(targetUserId);
+    if (!targetUser) {
+      return res.json({ success: false, message: "Target user not found" });
+    }
+
+    // Admin can update these fields
+    const allowedFields = ["name", "email", "address", "phoneNumber", "dob", "gender"];
+    const update = {};
+    
+    allowedFields.forEach(field => {
+      if (updateFields[field] !== undefined) {
+        update[field] = updateFields[field];
+      }
+    });
+
+    // Validate email if provided
+    if (update.email) {
+      const emailExists = await userModel.findOne({ 
+        email: update.email, 
+        _id: { $ne: targetUserId } 
+      });
+      if (emailExists) {
+        return res.json({ success: false, message: "Email already in use" });
+      }
+    }
+
+    // Update user
+    const updatedUser = await userModel.findByIdAndUpdate(
+      targetUserId, 
+      update, 
+      { new: true }
+    ).select("-password");
+
+    res.json({ 
+      success: true, 
+      message: "User updated successfully",
+      data: updatedUser 
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false, message: "Error updating user" });
+  }
+};
+
+export { loginUser, registerUser, getProfile, updateProfile, adminUpdateRole, adminUpdateUser };
