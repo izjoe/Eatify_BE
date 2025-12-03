@@ -96,7 +96,7 @@ orderRouter.post("/status", authMiddleware, validateOrderStatus, updateStatus);
 /**
  * @swagger
  * /api/order/userorders:
- *   post:
+ *   get:
  *     tags:
  *       - Order
  *     summary: Get user's orders
@@ -108,7 +108,7 @@ orderRouter.post("/status", authMiddleware, validateOrderStatus, updateStatus);
  *       401:
  *         description: Not authenticated
  */
-orderRouter.post("/userorders", authMiddleware, userOrders);
+orderRouter.get("/userorders", authMiddleware, userOrders);
 
 /**
  * @swagger

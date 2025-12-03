@@ -53,14 +53,14 @@ This provides an interactive interface to test all endpoints.
 ### Shopping Cart (`/api/cart`)
 - **POST** `/add` - Add item to cart (requires auth)
 - **POST** `/remove` - Remove item from cart (requires auth)
-- **POST** `/get` - Get cart data (requires auth)
+- **GET** `/` - Get cart data (requires auth)
 
 ### Orders (`/api/order`)
 - **POST** `/place` - Place new order (requires auth)
-- **POST** `/verify` - Verify payment
+- **POST** `/verify` - Verify payment (admin only)
 - **POST** `/status` - Update order status (requires auth)
-- **POST** `/userorders` - Get user's orders (requires auth)
-- **GET** `/list` - Get all orders (admin/seller only)
+- **GET** `/userorders` - Get user's orders (requires auth)
+- **GET** `/list` - Get all orders (admin only)
 - **GET** `/detail/:orderID` - Get order details (requires auth)
 
 ### Sellers (`/api/seller`)
@@ -129,9 +129,9 @@ backend/
 ### Shopping & Ordering
 1. GET `/api/food/list` - Browse food items
 2. POST `/api/cart/add` - Add items to cart
-3. GET `/api/cart/get` - View cart
+3. GET `/api/cart` - View cart
 4. POST `/api/order/place` - Checkout
-5. POST `/api/order/verify` - Verify payment
+5. POST `/api/order/verify` - Verify payment (admin)
 
 ### Seller Operations
 1. POST `/api/food/add` - List food items

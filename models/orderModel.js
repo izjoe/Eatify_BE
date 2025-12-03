@@ -13,6 +13,8 @@ const orderSchema = new mongoose.Schema(
     userID: { type: String, required: true },
     items: [orderItemSchema],
     totalPrice: { type: Number, required: true },
+    deliveryAddress: { type: String, required: true },
+    phone: { type: String, required: true },
     isPaid: { type: Boolean, default: false },
     orderStatus: {
       type: String,

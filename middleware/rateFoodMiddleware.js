@@ -32,7 +32,7 @@ export const canRateFood = async (req, res, next) => {
     const completedOrder = await Order.findOne({
       userID,
       "items.foodID": foodID,
-      status: "completed"
+      orderStatus: "completed"
     });
 
     if (!completedOrder) {

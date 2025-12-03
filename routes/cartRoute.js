@@ -62,8 +62,8 @@ cartRouter.post("/remove", authMiddleware, removeFromCart);
 
 /**
  * @swagger
- * /api/cart/get:
- *   post:
+ * /api/cart:
+ *   get:
  *     tags:
  *       - Cart
  *     summary: Get cart data
@@ -77,6 +77,6 @@ cartRouter.post("/remove", authMiddleware, removeFromCart);
  */
 
 // Get user's cart
-cartRouter.post("/get", authMiddleware, getCart);
+cartRouter.get("/", authMiddleware, getCart);
 
 export default cartRouter;

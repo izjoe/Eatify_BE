@@ -8,7 +8,7 @@ export const rateFood = async (req, res) => {
 
     // Get user's userID from the database
     const user = await userModel.findById(userId);
-    if (!user) return res.status(400).json({ message: "User not found" });
+    if (!user) return res.json({ success: false, message: "User not found" });
     const userID = user.userID;
 
     const newRating = new RatingModel({
@@ -22,14 +22,16 @@ export const rateFood = async (req, res) => {
     await newRating.save();
 
     res.json({
+      success: true,
       message: "Food rating submitted successfully.",
       data: newRating
     });
 
   } catch (error) {
-    res.status(500).json({
-      message: "Server error while submitting food rating.",
-      error: error.message
+    console.error(error);
+    res.json({
+      success: false,
+      message: "Server error while submitting food rating."
     });
   }
 };
