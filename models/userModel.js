@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
     userName: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, default: "user" },
+    role: { type: String, enum: ["buyer", "seller"], default: "buyer" },
     
     // Profile fields
     name: { type: String },

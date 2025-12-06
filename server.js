@@ -21,14 +21,37 @@ import sellerRouter from "./routes/sellerRoute.js";
 import ratingRouter from "./routes/ratingRoute.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import promotionRouter from "./routes/promotionRoute.js";
+import revenueRouter from "./routes/revenueRoute.js";
 
 // App config
 const app = express();
 const port = process.env.PORT || 4000;
 
 // Middlewares
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost on any port
+    if (origin.match(/^http:\/\/localhost:\d+$/) || origin.match(/^http:\/\/127\.0\.0\.1:\d+$/)) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "token"]
+};
+
 app.use(express.json());
-app.use(cors());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options("*", cors(corsOptions));
 
 // Connect to MongoDB
 connectDB();
@@ -47,6 +70,8 @@ app.use("/api/cart", cartRouter);
 app.use("/api/order", orderRouter);
 app.use("/api/seller", sellerRouter);
 app.use("/api/rating", ratingRouter);
+app.use("/api/promotion", promotionRouter);
+app.use("/api/revenue", revenueRouter);
 
 // Static files
 app.use("/images", express.static("uploads"));

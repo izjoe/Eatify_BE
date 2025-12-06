@@ -10,14 +10,19 @@ const loginUser = async (req, res) => {
   try {
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.json({ success: false, message: "User Doesn't exist" });
+      return res.status(401).json({ success: false, message: "User Doesn't exist" });
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.json({ success: false, message: "Invalid Credentials" });
+      return res.status(401).json({ success: false, message: "Invalid Credentials" });
     }
-    const role = user.role;
+    
+    // ✅ Ensure role is valid
+    const userRole = (user.role === "seller" || user.role === "buyer") ? user.role : "buyer";
     const token = createToken(user._id);
+    
+    console.log("✅ Login successful:", { email, role: userRole });
+    
     // return basic user data so frontend can prefill profile
     const userData = {
       name: user.name,
@@ -28,10 +33,18 @@ const loginUser = async (req, res) => {
       phoneNumber: user.phoneNumber,
       profileImage: user.profileImage,
     };
-    res.json({ success: true, token, role, data: userData });
+    
+    res.status(200).json({ 
+      success: true, 
+      token, 
+      role: userRole, 
+      userID: user.userID,
+      name: user.name,
+      data: userData 
+    });
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: "Error" });
+    console.log("❌ Login error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -44,22 +57,22 @@ const createToken = (id) => {
 // register user
 
 const registerUser = async (req, res) => {
-  const { name, email, password, phoneNumber, dob, gender } = req.body;
+  const { name, email, password, phoneNumber, dob, gender, role } = req.body;
   try {
     // checking user is already exist
     const exists = await userModel.findOne({ email });
     if (exists) {
-      return res.json({ success: false, message: "User already exists" });
+      return res.status(400).json({ success: false, message: "User already exists" });
     }
 
     // validating email format and strong password
     if (!validator.isEmail(email)) {
-      return res.json({ success: false, message: "Please enter valid email" });
+      return res.status(400).json({ success: false, message: "Please enter valid email" });
     }
     if (password.length < 8) {
-      return res.json({
+      return res.status(400).json({
         success: false,
-        message: "Please enter strong password",
+        message: "Please enter strong password (min 8 characters)",
       });
     }
 
@@ -72,7 +85,7 @@ const registerUser = async (req, res) => {
     if (phoneNumber !== undefined) {
       const phoneRegex = /^\+84\d{9}$/;
       if (!phoneRegex.test(phoneNumber)) {
-        return res.json({ success: false, message: "Phone number must be in +84XXXXXXXXX format." });
+        return res.status(400).json({ success: false, message: "Phone number must be in +84XXXXXXXXX format." });
       }
     }
 
@@ -92,13 +105,17 @@ const registerUser = async (req, res) => {
       };
       parsedDob = parseDob(dob);
       if (!parsedDob) {
-        return res.json({ success: false, message: "dob must be in dd-mm-yyyy format." });
+        return res.status(400).json({ success: false, message: "dob must be in dd-mm-yyyy format." });
       }
     }
 
     // Generate unique userID and userName
     const userID = "U" + Date.now();
     const userName = email.split('@')[0] + "_" + Date.now();
+    
+    // ✅ Validate and set role (buyer or seller)
+    const userRole = (role === "seller" || role === "buyer") ? role : "buyer";
+    console.log("📝 Register:", { email, userRole });
 
     const newUser = new userModel({
       userID,
@@ -106,27 +123,27 @@ const registerUser = async (req, res) => {
       name: name,
       email: email,
       password: hashedPassword,
+      role: userRole,  // ✅ Save role from request
       ...(phoneNumber !== undefined ? { phoneNumber } : {}),
       ...(parsedDob ? { dob: parsedDob } : {}),
       ...(gender !== undefined ? { gender } : {}),
     });
 
     const user = await newUser.save();
-    const role = user.role;
-    const token = createToken(user._id);
-    const userData = {
-      name: user.name,
+    
+    console.log("✅ User registered:", { userID, email, role: user.role });
+    
+    // ✅ Return 201 WITHOUT token - user must login
+    res.status(201).json({ 
+      success: true, 
+      msg: "Registration successful. Please login.",
+      userID: user.userID,
       email: user.email,
-      dob: user.dob,
-      address: user.address,
-      gender: user.gender,
-      phoneNumber: user.phoneNumber,
-      profileImage: user.profileImage,
-    };
-    res.json({ success: true, token, role, data: userData });
+      role: user.role
+    });
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: "Error" });
+    console.log("❌ Register error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
