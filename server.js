@@ -1,9 +1,16 @@
 // server.js
 import express from "express";
 import cors from "cors";
-import * as dotenv from 'dotenv';
+
+// Load environment variables FIRST
+import * as dotenv from "dotenv";
+dotenv.config();
+
+// DEBUG .env loading
+console.log(">>> DEBUG: MONGO_URI =", process.env.MONGO_URI);
+
 import { connectDB } from "./config/db.js";
-import { swaggerDocs } from "./src/swagger.js";
+import { swaggerDocs } from "./swagger.js";
 
 // Import routes
 import foodRouter from "./routes/foodRoute.js";
@@ -15,9 +22,6 @@ import ratingRouter from "./routes/ratingRoute.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
-// Load environment variables first
-dotenv.config();
-
 // App config
 const app = express();
 const port = process.env.PORT || 4000;
@@ -26,7 +30,7 @@ const port = process.env.PORT || 4000;
 app.use(express.json());
 app.use(cors());
 
-// DB connection
+// Connect to MongoDB
 connectDB();
 
 // Root endpoint
