@@ -81,11 +81,11 @@ const registerUser = async (req, res) => {
     const salt = await bcrypt.genSalt(Number(process.env.SALT));
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // validate optional phoneNumber
+    // validate optional phoneNumber (Vietnamese format: +84xxxxxxxxx or 0xxxxxxxxx)
     if (phoneNumber !== undefined) {
-      const phoneRegex = /^\+84\d{9}$/;
+      const phoneRegex = /^(\+84|0)\d{9}$/;
       if (!phoneRegex.test(phoneNumber)) {
-        return res.status(400).json({ success: false, message: "Phone number must be in +84XXXXXXXXX format." });
+        return res.status(400).json({ success: false, message: "Phone number must be in +84XXXXXXXXX or 0XXXXXXXXX format (9 digits after prefix)." });
       }
     }
 
@@ -150,7 +150,8 @@ const registerUser = async (req, res) => {
 // get user profile (protected)
 const getProfile = async (req, res) => {
   try {
-    const userId = req.body.userId;
+    // ✅ Lấy userId từ req.userId (set bởi auth middleware) hoặc fallback sang req.body.userId
+    const userId = req.userId || req.body.userId;
     const user = await userModel.findById(userId).select("-password");
     if (!user) return res.json({ success: false, message: "User not found" });
     
@@ -174,24 +175,37 @@ const getProfile = async (req, res) => {
 // update user profile (protected)
 const updateProfile = async (req, res) => {
   try {
-    const userId = req.body.userId;
+    // ✅ Lấy userId từ req.userId (set bởi auth middleware) hoặc fallback sang req.body.userId
+    const userId = req.userId || req.body.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Not authorized" });
+    }
+
     const update = {};
-    // accept only allowed fields (userID, role are NOT allowed - system managed only)
-    const allowed = ["name", "dob", "address", "gender", "phoneNumber", "profileImage", "email", "userName"];
+    // accept only allowed fields (email, userID, role are NOT allowed - system managed only)
+    const allowed = ["name", "dob", "address", "gender", "phoneNumber", "profileImage", "userName"];
     allowed.forEach((f) => {
       if (req.body[f] !== undefined) update[f] = req.body[f];
+    });
+    
+    // Remove empty string values to prevent validation errors
+    Object.keys(update).forEach(key => {
+      if (update[key] === '') {
+        delete update[key];
+      }
     });
     
     // validate userName if provided (unique, no spaces)
     if (update.userName !== undefined) {
       const userNameRegex = /^[a-zA-Z0-9_]+$/;
       if (!userNameRegex.test(update.userName)) {
-        return res.json({ success: false, message: "userName must contain only letters, numbers, and underscores (no spaces)." });
+        return res.status(400).json({ success: false, message: "userName must contain only letters, numbers, and underscores (no spaces)." });
       }
       // Check if userName is already taken by another user
       const existingUser = await userModel.findOne({ userName: update.userName });
       if (existingUser && existingUser._id.toString() !== userId) {
-        return res.json({ success: false, message: "userName already taken. Please choose another one." });
+        return res.status(400).json({ success: false, message: "userName already taken. Please choose another one." });
       }
     }
 
@@ -199,15 +213,15 @@ const updateProfile = async (req, res) => {
     if (update.gender !== undefined) {
       const allowedGenders = ["Male", "Female", "Other"];
       if (!allowedGenders.includes(update.gender)) {
-        return res.json({ success: false, message: "Invalid gender. Allowed values: Male, Female, Other." });
+        return res.status(400).json({ success: false, message: "Invalid gender. Allowed values: Male, Female, Other." });
       }
     }
 
-    // validate phoneNumber if provided (only digits after +84)
+    // validate phoneNumber if provided (Vietnamese format: +84xxxxxxxxx or 0xxxxxxxxx)
     if (update.phoneNumber !== undefined) {
-      const phoneRegex = /^\+84\d{9}$/;
+      const phoneRegex = /^(\+84|0)\d{9}$/;
       if (!phoneRegex.test(update.phoneNumber)) {
-        return res.json({ success: false, message: "Phone number must be in +84XXXXXXXXX format (digits only)." });
+        return res.status(400).json({ success: false, message: "Phone number must be in +84XXXXXXXXX or 0XXXXXXXXX format (9 digits after prefix)." });
       }
     }
 
@@ -226,22 +240,28 @@ const updateProfile = async (req, res) => {
       };
       const parsed = parseDob(update.dob);
       if (!parsed) {
-        return res.json({ success: false, message: "dob must be in dd-mm-yyyy format." });
+        return res.status(400).json({ success: false, message: "dob must be in dd-mm-yyyy format." });
       }
       update.dob = parsed;
     }
+    
     const user = await userModel.findByIdAndUpdate(userId, update, { new: true }).select("-password");
-    res.json({ success: true, data: user });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    
+    return res.status(200).json({ success: true, data: user });
   } catch (err) {
     console.log(err);
-    res.json({ success: false, message: "Error" });
+    return res.status(500).json({ success: false, message: "Error updating profile" });
   }
 };
 
 // Admin: Update user's role (admin only)
 const adminUpdateRole = async (req, res) => {
   try {
-    const userId = req.body.userId; // from auth middleware (admin's ID)
+    // ✅ Lấy userId từ req.userId (admin's ID từ auth middleware)
+    const userId = req.userId || req.body.userId;
     const { targetUserId, newRole } = req.body;
 
     // Verify admin
@@ -295,7 +315,8 @@ const adminUpdateRole = async (req, res) => {
 // Admin: Update any user's profile (admin only)
 const adminUpdateUser = async (req, res) => {
   try {
-    const userId = req.body.userId; // from auth middleware (admin's ID)
+    // ✅ Lấy userId từ req.userId (admin's ID từ auth middleware)
+    const userId = req.userId || req.body.userId;
     const { targetUserId, ...updateFields } = req.body;
 
     // Verify admin

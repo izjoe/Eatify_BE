@@ -7,8 +7,14 @@ export const requireAuth = (req, res, next) => {
     if (!token) return res.status(401).json({ msg: "No token" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.body.userId = decoded.id; // Gán userId vào req.body để controllers sử dụng
-    req.user = decoded; // ✅ decoded chứa {id, role}
+    
+    // ✅ Lưu userId vào req.userId (ưu tiên dùng cái này)
+    req.userId = decoded.id;
+    
+    // ✅ Cũng lưu vào req.body.userId cho backward compatibility
+    req.body.userId = decoded.id;
+    
+    req.user = decoded; // decoded chứa {id, role}
 
     next();
   } catch (error) {
