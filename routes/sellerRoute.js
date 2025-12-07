@@ -9,6 +9,7 @@ import {
   listSellers,
   updateSellerInfo
 } from "../controllers/sellerController.js";
+import { getRestaurantFoods } from "../controllers/foodController.js";
 
 const sellerRouter = express.Router();
 
@@ -49,6 +50,27 @@ sellerRouter.get("/", listSellers);
  *         description: Seller details fetched successfully
  */
 sellerRouter.get("/:sellerID", getSellerDetail);
+
+/**
+ * @swagger
+ * /api/seller/{restaurantId}/foods:
+ *   get:
+ *     summary: Get all foods belonging to a restaurant
+ *     tags: [Seller]
+ *     parameters:
+ *       - in: path
+ *         name: restaurantId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Restaurant/Seller ID
+ *     responses:
+ *       200:
+ *         description: Restaurant foods fetched successfully
+ *       404:
+ *         description: Restaurant not found
+ */
+sellerRouter.get("/:restaurantId/foods", getRestaurantFoods);
 
 /**
  * @swagger

@@ -1,5 +1,6 @@
 import express from "express";
-import { addFood, listFood, removeFood } from "../controllers/foodController.js";
+import { addFood, listFood, removeFood, getFoodById, getRestaurantFoods } from "../controllers/foodController.js";
+import { getFoodReviews, createFoodReview } from "../controllers/ratingController.js";
 import multer from "multer";
 import path from "path";
 import auth from "../middleware/authMiddleware.js";
@@ -116,13 +117,93 @@ foodRouter.post("/add", auth, requireSeller, upload.single("image"), addFood);
  * @swagger
  * /api/food/list:
  *   get:
- *     summary: Get food list
+ *     summary: Get food list with seller info and ratings
  *     tags: [Food]
  *     responses:
  *       200:
  *         description: Food list fetched successfully
  */
 foodRouter.get("/list", listFood);
+
+/**
+ * @swagger
+ * /api/food/{id}:
+ *   get:
+ *     summary: Get food details by ID with seller info and reviews
+ *     tags: [Food]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Food ID (_id or foodID)
+ *     responses:
+ *       200:
+ *         description: Food details fetched successfully
+ *       404:
+ *         description: Food not found
+ */
+foodRouter.get("/:id", getFoodById);
+
+/**
+ * @swagger
+ * /api/food/{foodID}/reviews:
+ *   get:
+ *     summary: Get all reviews for a food item
+ *     tags: [Food]
+ *     parameters:
+ *       - in: path
+ *         name: foodID
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Food ID
+ *     responses:
+ *       200:
+ *         description: Reviews fetched successfully
+ */
+foodRouter.get("/:foodID/reviews", getFoodReviews);
+
+/**
+ * @swagger
+ * /api/food/{foodID}/review:
+ *   post:
+ *     summary: Create a new review for a food item
+ *     tags: [Food]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: foodID
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Food ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - rating
+ *             properties:
+ *               rating:
+ *                 type: number
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 example: 5
+ *               comment:
+ *                 type: string
+ *                 example: "Món ăn rất ngon!"
+ *     responses:
+ *       200:
+ *         description: Review created successfully
+ *       400:
+ *         description: Already reviewed or invalid data
+ */
+foodRouter.post("/:foodID/review", auth, createFoodReview);
 
 /**
  * @swagger
