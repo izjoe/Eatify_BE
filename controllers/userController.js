@@ -153,7 +153,18 @@ const getProfile = async (req, res) => {
     const userId = req.body.userId;
     const user = await userModel.findById(userId).select("-password");
     if (!user) return res.json({ success: false, message: "User not found" });
-    res.json({ success: true, data: user });
+    
+    // Validate required fields for checkout
+    const requiredFields = ['name', 'email', 'phoneNumber', 'address'];
+    const missingFields = requiredFields.filter(field => !user[field] || user[field].toString().trim() === '');
+    
+    // Return profile with validation status
+    res.json({ 
+      success: true, 
+      data: user,
+      isComplete: missingFields.length === 0,
+      missingFields: missingFields
+    });
   } catch (err) {
     console.log(err);
     res.json({ success: false, message: "Error" });
@@ -342,4 +353,27 @@ const adminUpdateUser = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser, getProfile, updateProfile, adminUpdateRole, adminUpdateUser };
+// Upload avatar (protected)
+const uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    // Return the filename for frontend to use
+    const avatarUrl = req.file.filename;
+    
+    res.json({ 
+      success: true, 
+      message: "Avatar uploaded successfully",
+      avatarUrl: avatarUrl,
+      fullUrl: `${req.protocol}://${req.get('host')}/uploads/avatars/${avatarUrl}`
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false, message: "Error uploading avatar" });
+  }
+};
+
+export { loginUser, registerUser, getProfile, updateProfile, adminUpdateRole, adminUpdateUser, uploadAvatar };

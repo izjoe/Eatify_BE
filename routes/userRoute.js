@@ -1,5 +1,7 @@
 // routes/userRoute.js
 import express from "express";
+import multer from "multer";
+import path from "path";
 import { validate } from "../middleware/validateMiddleware.js";
 import {
   updateUserSchema
@@ -16,10 +18,36 @@ import {
   getProfile,
   updateProfile,
   adminUpdateUser,
-  adminUpdateRole
+  adminUpdateRole,
+  uploadAvatar
 } from "../controllers/userController.js";
 
 const userRouter = express.Router();
+
+// Multer configuration for avatar upload
+const avatarStorage = multer.diskStorage({
+  destination: "uploads/avatars",
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const safeFilename = `avatar_${Date.now()}_${Math.random().toString(36).substring(7)}${ext}`;
+    return cb(null, safeFilename);
+  }
+});
+
+const avatarFileFilter = (req, file, cb) => {
+  const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only image files (jpg, png, webp) are allowed!"), false);
+  }
+};
+
+const uploadAvatarMiddleware = multer({ 
+  storage: avatarStorage,
+  fileFilter: avatarFileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB max
+});
 
 /**
  * @swagger
@@ -369,5 +397,53 @@ userRouter.put(
   validate(adminUpdateUserSchema),
   adminUpdateUser
 );
+
+/**
+ * @swagger
+ * /api/user/upload-avatar:
+ *   post:
+ *     summary: Upload user avatar
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - avatar
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: Avatar image file (max 5MB, jpg/png/webp)
+ *     responses:
+ *       200:
+ *         description: Avatar uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Avatar uploaded successfully
+ *                 avatarUrl:
+ *                   type: string
+ *                   example: avatar_1234567890_abc123.jpg
+ *                 fullUrl:
+ *                   type: string
+ *                   example: http://localhost:4000/uploads/avatars/avatar_1234567890_abc123.jpg
+ *       400:
+ *         description: No file uploaded or invalid file type
+ *       401:
+ *         description: Unauthorized
+ */
+userRouter.post("/upload-avatar", auth, uploadAvatarMiddleware.single("avatar"), uploadAvatar);
 
 export default userRouter;

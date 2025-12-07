@@ -75,6 +75,7 @@ app.use("/api/revenue", revenueRouter);
 
 // Static files
 app.use("/images", express.static("uploads"));
+app.use("/uploads", express.static("uploads")); // Serve all uploads including avatars
 
 // Swagger documentation
 swaggerDocs(app);
