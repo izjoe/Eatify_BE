@@ -26,12 +26,15 @@ const loginUser = async (req, res) => {
     // return basic user data so frontend can prefill profile
     const userData = {
       name: user.name,
+      displayName: user.displayName || user.name,
       email: user.email,
       dob: user.dob,
       address: user.address,
       gender: user.gender,
       phoneNumber: user.phoneNumber,
       profileImage: user.profileImage,
+      profileCompleted: user.profileCompleted || false,
+      onboardingShown: user.onboardingShown || false,
     };
     
     res.status(200).json({ 
@@ -40,6 +43,9 @@ const loginUser = async (req, res) => {
       role: userRole, 
       userID: user.userID,
       name: user.name,
+      displayName: user.displayName || user.name,
+      profileCompleted: user.profileCompleted || false,
+      onboardingShown: user.onboardingShown || false,
       data: userData 
     });
   } catch (error) {
@@ -57,7 +63,7 @@ const createToken = (id) => {
 // register user
 
 const registerUser = async (req, res) => {
-  const { name, email, password, phoneNumber, dob, gender, role } = req.body;
+  const { name, displayName, email, password, phoneNumber, dob, gender, role } = req.body;
   try {
     // checking user is already exist
     const exists = await userModel.findOne({ email });
@@ -121,9 +127,12 @@ const registerUser = async (req, res) => {
       userID,
       userName,
       name: name,
+      displayName: displayName || name, // Lưu displayName, fallback về name
       email: email,
       password: hashedPassword,
       role: userRole,  // ✅ Save role from request
+      profileCompleted: false, // Mặc định chưa hoàn thành profile
+      onboardingShown: false, // Chưa show onboarding
       ...(phoneNumber !== undefined ? { phoneNumber } : {}),
       ...(parsedDob ? { dob: parsedDob } : {}),
       ...(gender !== undefined ? { gender } : {}),

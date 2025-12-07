@@ -5,9 +5,9 @@ import validator from "validator";
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, displayName, email, password, role } = req.body;
     
-    console.log("📝 Register request received:", { name, email, role });
+    console.log("📝 Register request received:", { name, displayName, email, role });
 
     // Validate email format
     if (!validator.isEmail(email)) {
@@ -57,9 +57,12 @@ export const registerUser = async (req, res) => {
       userID,
       userName,
       name,
+      displayName: displayName || name, // Lưu displayName, fallback về name
       email,
       password: hashed,
-      role: userRole
+      role: userRole,
+      profileCompleted: false, // Mặc định chưa hoàn thành profile
+      onboardingShown: false, // Chưa show onboarding
     });
 
     console.log("✅ User created successfully:", { userID, email, role: newUser.role });
@@ -71,7 +74,8 @@ export const registerUser = async (req, res) => {
       msg: "Registration successful. Please login with your credentials.",
       userID: newUser.userID,
       email: newUser.email,
-      role: newUser.role
+      role: newUser.role,
+      displayName: newUser.displayName
     });
   } catch (error) {
     console.error("❌ Register error:", error);
@@ -113,7 +117,7 @@ export const loginUser = async (req, res) => {
 
     console.log("✅ Login successful for:", email, "Token:", token.substring(0, 20) + "...", "Role:", user.role);
 
-    // ✅ Return 200 OK with token + role
+    // ✅ Return 200 OK with token + role + seller onboarding data
     res.status(200).json({
       success: true,
       msg: "Login successful",
@@ -121,7 +125,10 @@ export const loginUser = async (req, res) => {
       role: user.role,
       userID: user.userID,
       name: user.name,
-      email: user.email
+      displayName: user.displayName || user.name,
+      email: user.email,
+      profileCompleted: user.profileCompleted || false,
+      onboardingShown: user.onboardingShown || false,
     });
   } catch (error) {
     console.error("❌ Login error:", error);
@@ -129,5 +136,74 @@ export const loginUser = async (req, res) => {
       msg: "Server error during login", 
       error: error.message 
     });
+  }
+};
+
+// GET /api/auth/me - Lấy thông tin user hiện tại
+export const getCurrentUser = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const user = await userModel.findById(userId).select("-password");
+    
+    if (!user) {
+      return res.status(404).json({ success: false, msg: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        id: user._id,
+        userID: user.userID,
+        name: user.name,
+        displayName: user.displayName || user.name,
+        email: user.email,
+        role: user.role,
+        profileCompleted: user.profileCompleted || false,
+        onboardingShown: user.onboardingShown || false,
+        profileImage: user.profileImage,
+      }
+    });
+  } catch (error) {
+    console.error("❌ Get current user error:", error);
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+};
+
+// PUT /api/auth/mark-onboarding-shown - Đánh dấu đã show onboarding
+export const markOnboardingShown = async (req, res) => {
+  try {
+    const userId = req.userId;
+    
+    await userModel.findByIdAndUpdate(userId, { 
+      onboardingShown: true 
+    });
+
+    res.status(200).json({
+      success: true,
+      msg: "Onboarding marked as shown"
+    });
+  } catch (error) {
+    console.error("❌ Mark onboarding error:", error);
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+};
+
+// PUT /api/auth/mark-profile-completed - Đánh dấu đã hoàn thành profile
+export const markProfileCompleted = async (req, res) => {
+  try {
+    const userId = req.userId;
+    
+    await userModel.findByIdAndUpdate(userId, { 
+      profileCompleted: true,
+      onboardingShown: true // Cũng đánh dấu đã show onboarding
+    });
+
+    res.status(200).json({
+      success: true,
+      msg: "Profile marked as completed"
+    });
+  } catch (error) {
+    console.error("❌ Mark profile completed error:", error);
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 };

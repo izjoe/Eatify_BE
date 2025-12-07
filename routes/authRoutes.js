@@ -1,7 +1,8 @@
 import express from "express";
 import { registerSchema, loginSchema } from "../validations/authValidation.js";
 import { validate } from "../middleware/validateMiddleware.js";
-import { registerUser, loginUser } from "../controllers/authController.js";
+import { registerUser, loginUser, getCurrentUser, markOnboardingShown, markProfileCompleted } from "../controllers/authController.js";
+import auth from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -136,5 +137,47 @@ router.post("/register", validate(registerSchema), registerUser);
  *         description: Invalid credentials
  */
 router.post("/login", validate(loginSchema), loginUser);
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get current user info
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user data
+ */
+router.get("/me", auth, getCurrentUser);
+
+/**
+ * @swagger
+ * /api/auth/mark-onboarding-shown:
+ *   put:
+ *     summary: Mark onboarding as shown for seller
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Onboarding marked as shown
+ */
+router.put("/mark-onboarding-shown", auth, markOnboardingShown);
+
+/**
+ * @swagger
+ * /api/auth/mark-profile-completed:
+ *   put:
+ *     summary: Mark profile as completed for seller
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile marked as completed
+ */
+router.put("/mark-profile-completed", auth, markProfileCompleted);
 
 export default router;
