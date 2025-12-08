@@ -91,6 +91,32 @@ app.use("/uploads", express.static("uploads")); // Serve all uploads including a
 // Swagger documentation
 swaggerDocs(app);
 
+// Global error handler for Multer and other errors
+import multer from 'multer';
+app.use((err, req, res, next) => {
+  // Handle Multer errors
+  if (err instanceof multer.MulterError) {
+    console.error('Multer Error:', err.code, err.field);
+    return res.status(400).json({
+      success: false,
+      message: `Upload error: ${err.message}`,
+      code: err.code,
+      field: err.field
+    });
+  }
+  
+  // Handle other errors
+  if (err) {
+    console.error('Server Error:', err.message);
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Internal server error'
+    });
+  }
+  
+  next();
+});
+
 // Start server (only in non-serverless environments)
 // Vercel will handle the server automatically
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {

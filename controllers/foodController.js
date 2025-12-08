@@ -7,12 +7,17 @@ import fs from "fs";
 // Seller adds a new food item
 export const addFood = async (req, res) => {
   try {
-    const { foodName, description, price, category } = req.body;
-    const userId = req.body.userId; // from auth middleware
+    // Debug logging
+    console.log('📥 addFood - req.body:', req.body);
+    console.log('📥 addFood - req.file:', req.file);
+    console.log('📥 addFood - req.userId:', req.userId);
+    
+    const { foodName, description, price, category, stock } = req.body;
+    const userId = req.userId || req.body.userId; // from auth middleware
 
     // Validate required file
     if (!req.file) {
-      return res.json({ success: false, message: "Food image is required." });
+      return res.status(400).json({ success: false, message: "Food image is required. Expected field name: 'image'" });
     }
 
     // Get user from database
@@ -45,11 +50,12 @@ export const addFood = async (req, res) => {
       price: Number(price),
       category,
       foodImage: req.file.filename,
-      stock: 0, // Default stock
+      stock: Number(stock) || 0, // Use stock from request or default 0
       isAvailable: true
     });
 
     await food.save();
+    console.log('✅ Food added successfully:', foodID);
     res.json({ success: true, message: "Food added successfully.", foodID });
 
   } catch (error) {
