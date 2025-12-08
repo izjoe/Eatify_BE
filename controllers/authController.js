@@ -43,9 +43,6 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ msg: "Email already exists" });
     }
 
-    // Hash password with high cost factor
-    const hashed = await bcrypt.hash(password, 12);
-
     // Generate unique IDs
     const userID = `U${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const userName = email.split('@')[0] + "_" + Date.now();
@@ -54,13 +51,15 @@ export const registerUser = async (req, res) => {
     const userRole = role && (role === "seller" || role === "buyer") ? role : "buyer";
     console.log(" User role will be saved as:", userRole);
 
+    // Password will be automatically hashed by userModel pre-save hook
+    // Do NOT hash here to avoid double-hashing
     const newUser = await userModel.create({
       userID,
       userName,
       name,
       displayName: displayName || name, // Save displayName, fallback to name
       email,
-      password: hashed,
+      password: password, // Plain password - will be hashed by model
       role: userRole,
       profileCompleted: false, // Default: profile not completed
       onboardingShown: false, // Default: onboarding not shown
@@ -109,7 +108,7 @@ export const loginUser = async (req, res) => {
 
     const user = await userModel.findOne({ email });
     if (!user) {
-      console.log("❌ Auth: User not found:", email);
+      console.log("Auth: User not found:", email);
       // Don't reveal whether user exists or not
       return res.status(401).json({ msg: "Invalid credentials" });
     }
@@ -120,7 +119,7 @@ export const loginUser = async (req, res) => {
     console.log("🔐 Auth: Password match:", matched);
     
     if (!matched) {
-      console.log("❌ Auth: Invalid password for:", email);
+      console.log("Auth: Invalid password for:", email);
       return res.status(401).json({ msg: "Invalid credentials" });
     }
 

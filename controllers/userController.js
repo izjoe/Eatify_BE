@@ -92,10 +92,8 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // hashing user password
-
-    const salt = await bcrypt.genSalt(Number(process.env.SALT));
-    const hashedPassword = await bcrypt.hash(password, salt);
+    // ⚠️ Password hashing is handled by userModel pre-save hook
+    // Do NOT hash here to avoid double-hashing
 
     // validate optional phoneNumber (Vietnamese format: +84xxxxxxxxx or 0xxxxxxxxx)
     if (phoneNumber !== undefined) {
@@ -139,7 +137,7 @@ const registerUser = async (req, res) => {
       name: name,
       displayName: displayName || name, // Lưu displayName, fallback về name
       email: email,
-      password: hashedPassword,
+      password: password, // Plain password - will be hashed by model pre-save hook
       role: userRole,  //  Save role from request
       profileCompleted: false, // Mặc định chưa hoàn thành profile
       onboardingShown: false, // Chưa show onboarding

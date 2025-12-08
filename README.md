@@ -1,10 +1,6 @@
 # 🍔 Eatify Backend API
 
-# ⚙️ Eatify - Backend
-
 > A secure and scalable RESTful API for food delivery platform built with Node.js, Express, and MongoDB.
-
-This is the server-side API for the Eatify food ordering application, built with **Node.js**, **Express**, and **MongoDB**. It provides a RESTful API for handling all business logic, including user authentication, database management (users, food, restaurants), and order processing.
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-6+-green.svg)](https://www.mongodb.com/)
@@ -12,15 +8,84 @@ This is the server-side API for the Eatify food ordering application, built with
 
 ## 🌐 Production Server
 
-**API Base URL:** https://eatify-be.onrender.com
+**API Base URL:** `https://eatify-be.onrender.com`
 
 **API Documentation:** https://eatify-be.onrender.com/api-docs
 
-## 📚 Quick Links for Frontend Developers
+---
 
-- **[API Authentication Guide](./API_AUTHENTICATION.md)** - Complete authentication flow
-- **[Frontend Integration Guide](./FRONTEND_INTEGRATION.md)** - Code examples and troubleshooting
-- **[Test API Script](./test-api.sh)** - Automated API testing
+## � Authentication Endpoints (cho Frontend)
+
+### Login Options (chọn 1 trong 2):
+
+**Option 1 - Recommended:**
+```
+POST https://eatify-be.onrender.com/api/auth/login
+```
+
+**Option 2 - Alternative:**
+```
+POST https://eatify-be.onrender.com/api/user/login
+```
+
+### Request Body:
+```json
+{
+  "email": "user@example.com",
+  "password": "YourPassword123"
+}
+```
+
+### Success Response (200):
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "role": "buyer",
+  "userID": "U1234567890_abc",
+  "name": "User Name",
+  "displayName": "Display Name",
+  "profileCompleted": false,
+  "onboardingShown": false
+}
+```
+
+### Error Response (401):
+```json
+{
+  "success": false,
+  "message": "Invalid Credentials"
+}
+```
+
+---
+
+## 🐛 Troubleshooting "Invalid Credentials"
+
+1. **Kiểm tra URL endpoint:** Phải là `/api/user/login` hoặc `/api/auth/login`
+2. **Kiểm tra user đã được tạo chưa:** Register trước khi login
+3. **Kiểm tra password:** Đúng chính xác (case-sensitive)
+4. **Xem logs trên Render:** Check console logs để debug chi tiết
+
+---
+
+## 📝 Register New User
+
+```
+POST https://eatify-be.onrender.com/api/auth/register
+```
+
+### Request Body:
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "Password123",
+  "role": "buyer"
+}
+```
+
+**Note:** Password phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.
 
 ## ✨ Core Features
 
