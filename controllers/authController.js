@@ -2,22 +2,23 @@ import userModel from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import validator from "validator";
+import { sendEmail, getWelcomeEmailTemplate } from "../providers/emailProvider.js";
 
 export const registerUser = async (req, res) => {
   try {
     const { name, displayName, email, password, role } = req.body;
     
-    console.log("📝 Register request received:", { name, displayName, email, role });
+    console.log(" Register request received:", { name, displayName, email, role });
 
     // Validate email format
     if (!validator.isEmail(email)) {
-      console.log("❌ Invalid email format:", email);
+      console.log(" Invalid email format:", email);
       return res.status(400).json({ msg: "Invalid email format" });
     }
 
     // Strong password validation
     if (password.length < 8) {
-      console.log("❌ Password too short:", password.length);
+      console.log(" Password too short:", password.length);
       return res.status(400).json({ 
         msg: "Password must be at least 8 characters long" 
       });
@@ -29,7 +30,7 @@ export const registerUser = async (req, res) => {
     const hasNumber = /[0-9]/.test(password);
     
     if (!hasUpperCase || !hasLowerCase || !hasNumber) {
-      console.log("❌ Password complexity check failed");
+      console.log(" Password complexity check failed");
       return res.status(400).json({ 
         msg: "Password must contain uppercase, lowercase, and numbers" 
       });
@@ -38,7 +39,7 @@ export const registerUser = async (req, res) => {
     // Check if email already exists
     const exist = await userModel.findOne({ email });
     if (exist) {
-      console.log("❌ Email already exists:", email);
+      console.log(" Email already exists:", email);
       return res.status(400).json({ msg: "Email already exists" });
     }
 
@@ -49,25 +50,37 @@ export const registerUser = async (req, res) => {
     const userID = `U${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const userName = email.split('@')[0] + "_" + Date.now();
 
-    // ✅ Lưu role từ frontend (buyer hoặc seller)
+    //  Save role from frontend (buyer or seller)
     const userRole = role && (role === "seller" || role === "buyer") ? role : "buyer";
-    console.log("✅ User role will be saved as:", userRole);
+    console.log(" User role will be saved as:", userRole);
 
     const newUser = await userModel.create({
       userID,
       userName,
       name,
-      displayName: displayName || name, // Lưu displayName, fallback về name
+      displayName: displayName || name, // Save displayName, fallback to name
       email,
       password: hashed,
       role: userRole,
-      profileCompleted: false, // Mặc định chưa hoàn thành profile
-      onboardingShown: false, // Chưa show onboarding
+      profileCompleted: false, // Default: profile not completed
+      onboardingShown: false, // Default: onboarding not shown
     });
 
-    console.log("✅ User created successfully:", { userID, email, role: newUser.role });
+    console.log(" User created successfully:", { userID, email, role: newUser.role });
 
-    // ✅ Return 201 Created - NO TOKEN GENERATED
+    //  Send welcome email (do not wait for result, do not block response)
+    const emailTemplate = getWelcomeEmailTemplate(newUser.name || newUser.displayName, newUser.email);
+    sendEmail({
+      to: newUser.email,
+      subject: emailTemplate.subject,
+      text: emailTemplate.text,
+      html: emailTemplate.html,
+    }).catch(error => {
+      // Log error but do not fail registration
+      console.error("Failed to send welcome email:", error.message);
+    });
+
+    //  Return 201 Created - NO TOKEN GENERATED
     // User must login to get token
     res.status(201).json({ 
       success: true,
@@ -78,7 +91,7 @@ export const registerUser = async (req, res) => {
       displayName: newUser.displayName
     });
   } catch (error) {
-    console.error("❌ Register error:", error);
+    console.error(" Register error:", error);
     res.status(500).json({ msg: "Server error", error: error.message });
   }
 };
@@ -103,9 +116,9 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ msg: "Invalid credentials" });
     }
 
-    // ✅ Generate JWT Token
+    //  Generate JWT Token
     if (!process.env.JWT_SECRET) {
-      console.error("❌ JWT_SECRET not configured");
+      console.error(" JWT_SECRET not configured");
       return res.status(500).json({ msg: "Server configuration error" });
     }
 
@@ -115,9 +128,9 @@ export const loginUser = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    console.log("✅ Login successful for:", email, "Token:", token.substring(0, 20) + "...", "Role:", user.role);
+    console.log(" Login successful for:", email, "Token:", token.substring(0, 20) + "...", "Role:", user.role);
 
-    // ✅ Return 200 OK with token + role + seller onboarding data
+    //  Return 200 OK with token + role + seller onboarding data
     res.status(200).json({
       success: true,
       msg: "Login successful",
@@ -131,7 +144,7 @@ export const loginUser = async (req, res) => {
       onboardingShown: user.onboardingShown || false,
     });
   } catch (error) {
-    console.error("❌ Login error:", error);
+    console.error(" Login error:", error);
     res.status(500).json({ 
       msg: "Server error during login", 
       error: error.message 
@@ -139,7 +152,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// GET /api/auth/me - Lấy thông tin user hiện tại
+// GET /api/auth/me - Get current user information
 export const getCurrentUser = async (req, res) => {
   try {
     const userId = req.userId;
@@ -164,12 +177,12 @@ export const getCurrentUser = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("❌ Get current user error:", error);
+    console.error(" Get current user error:", error);
     res.status(500).json({ success: false, msg: "Server error" });
   }
 };
 
-// PUT /api/auth/mark-onboarding-shown - Đánh dấu đã show onboarding
+// PUT /api/auth/mark-onboarding-shown - Mark onboarding as shown
 export const markOnboardingShown = async (req, res) => {
   try {
     const userId = req.userId;
@@ -183,19 +196,19 @@ export const markOnboardingShown = async (req, res) => {
       msg: "Onboarding marked as shown"
     });
   } catch (error) {
-    console.error("❌ Mark onboarding error:", error);
+    console.error(" Mark onboarding error:", error);
     res.status(500).json({ success: false, msg: "Server error" });
   }
 };
 
-// PUT /api/auth/mark-profile-completed - Đánh dấu đã hoàn thành profile
+// PUT /api/auth/mark-profile-completed - Mark profile as completed
 export const markProfileCompleted = async (req, res) => {
   try {
     const userId = req.userId;
     
     await userModel.findByIdAndUpdate(userId, { 
       profileCompleted: true,
-      onboardingShown: true // Cũng đánh dấu đã show onboarding
+      onboardingShown: true // Also mark onboarding as shown
     });
 
     res.status(200).json({
@@ -203,7 +216,7 @@ export const markProfileCompleted = async (req, res) => {
       msg: "Profile marked as completed"
     });
   } catch (error) {
-    console.error("❌ Mark profile completed error:", error);
+    console.error(" Mark profile completed error:", error);
     res.status(500).json({ success: false, msg: "Server error" });
   }
 };

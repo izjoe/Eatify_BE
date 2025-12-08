@@ -8,10 +8,10 @@ export const requireAuth = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // ✅ Lưu userId vào req.userId (ưu tiên dùng cái này)
+    //  Lưu userId vào req.userId (ưu tiên dùng cái này)
     req.userId = decoded.id;
     
-    // ✅ Cũng lưu vào req.body.userId cho backward compatibility
+    //  Cũng lưu vào req.body.userId cho backward compatibility
     req.body.userId = decoded.id;
     
     req.user = decoded; // decoded chứa {id, role}

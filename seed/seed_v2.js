@@ -11,7 +11,7 @@ import ratingModel from "../models/ratingModel.js";
 const MONGO = process.env.MONGO_URI;
 
 if (!MONGO) {
-  console.error("❌ MONGO_URI is not defined in .env file");
+  console.error(" MONGO_URI is not defined in .env file");
   process.exit(1);
 }
 
@@ -241,10 +241,10 @@ const commentSamples = [
 async function seed() {
   try {
     await mongoose.connect(MONGO);
-    console.log("✅ Connected to MongoDB");
+    console.log(" Connected to MongoDB");
 
     // Clear old seed data
-    console.log("🗑️ Clearing old data...");
+    console.log("️ Clearing old data...");
     await Promise.all([
       sellerModel.deleteMany({ sellerID: { $regex: /^SELLER_/ } }),
       foodModel.deleteMany({ foodID: { $regex: /^FOOD_/ } }),
@@ -253,7 +253,7 @@ async function seed() {
     ]);
 
     // Create seller users first
-    console.log("👤 Creating seller accounts...");
+    console.log(" Creating seller accounts...");
     for (const restaurant of sampleRestaurants) {
       const username = restaurant.sellerID.toLowerCase().replace(/_/g, '');
       await userModel.create({
@@ -267,12 +267,12 @@ async function seed() {
     }
 
     // Insert restaurants
-    console.log("🏪 Inserting restaurants...");
+    console.log(" Inserting restaurants...");
     await sellerModel.insertMany(sampleRestaurants);
-    console.log(`   ✅ Inserted ${sampleRestaurants.length} restaurants`);
+    console.log(`    Inserted ${sampleRestaurants.length} restaurants`);
 
     // Insert foods
-    console.log("🍽️ Inserting foods...");
+    console.log("️ Inserting foods...");
     const foodDocuments = allFoods.map((food, index) => ({
       foodID: `FOOD_${String(index + 1).padStart(3, '0')}`,
       sellerID: categoryToSeller[food.category],
@@ -288,13 +288,13 @@ async function seed() {
     }));
 
     await foodModel.insertMany(foodDocuments);
-    console.log(`   ✅ Inserted ${foodDocuments.length} foods`);
+    console.log(`    Inserted ${foodDocuments.length} foods`);
 
     // Create demo users
-    console.log("👥 Creating demo users...");
+    console.log(" Creating demo users...");
     const users = generateDemoUsers(20);
     const createdUsers = await userModel.insertMany(users);
-    console.log(`   ✅ Created ${createdUsers.length} users`);
+    console.log(`    Created ${createdUsers.length} users`);
 
     // Generate reviews
     console.log("⭐ Generating reviews...");
@@ -333,29 +333,29 @@ async function seed() {
     }
 
     await ratingModel.insertMany(reviewsToInsert);
-    console.log(`   ✅ Inserted ${reviewsToInsert.length} reviews`);
+    console.log(`    Inserted ${reviewsToInsert.length} reviews`);
 
     // Summary
-    console.log("\n🎉 Seeding complete!");
+    console.log("\n Seeding complete!");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log(`   📍 Restaurants: ${sampleRestaurants.length}`);
-    console.log(`   🍽️  Foods: ${foodDocuments.length}`);
-    console.log(`   👥 Demo Users: ${createdUsers.length}`);
+    console.log(`    Restaurants: ${sampleRestaurants.length}`);
+    console.log(`   ️  Foods: ${foodDocuments.length}`);
+    console.log(`    Demo Users: ${createdUsers.length}`);
     console.log(`   ⭐ Reviews: ${reviewsToInsert.length}`);
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     
     // Category breakdown
-    console.log("\n📊 Foods by Category:");
+    console.log("\n Foods by Category:");
     for (const cat of CATEGORIES) {
       const count = foodDocuments.filter(f => f.category === cat).length;
       console.log(`   ${cat}: ${count} món`);
     }
 
   } catch (err) {
-    console.error("❌ Seed failed:", err);
+    console.error(" Seed failed:", err);
   } finally {
     await mongoose.disconnect();
-    console.log("\n✅ Disconnected from MongoDB. Done!");
+    console.log("\n Disconnected from MongoDB. Done!");
   }
 }
 

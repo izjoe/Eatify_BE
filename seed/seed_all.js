@@ -11,7 +11,7 @@ import ratingModel from "../models/ratingModel.js";
 const MONGO = process.env.MONGO_URI;
 
 if (!MONGO) {
-  console.error("❌ MONGO_URI is not defined in .env file");
+  console.error(" MONGO_URI is not defined in .env file");
   process.exit(1);
 }
 
@@ -263,10 +263,10 @@ const commentSamples = [
 async function seed({ withReviews = true } = {}) {
   try {
     await mongoose.connect(MONGO);
-    console.log("✅ Connected to MongoDB:", MONGO);
+    console.log(" Connected to MongoDB:", MONGO);
 
     // Clear existing data
-    console.log("🗑️ Clearing old data...");
+    console.log("️ Clearing old data...");
     await Promise.all([
       sellerModel.deleteMany({ sellerID: { $regex: /^SELLER_/ } }),
       foodModel.deleteMany({ foodID: { $regex: /^FOOD_/ } }),
@@ -275,7 +275,7 @@ async function seed({ withReviews = true } = {}) {
     ]);
 
     // Create seller users first
-    console.log("👤 Creating seller users...");
+    console.log(" Creating seller users...");
     for (const restaurant of sampleRestaurants) {
       const existingUser = await userModel.findOne({ userID: restaurant.userID });
       if (!existingUser) {
@@ -292,12 +292,12 @@ async function seed({ withReviews = true } = {}) {
     }
 
     // Insert restaurants (sellers)
-    console.log("🏪 Inserting restaurants...");
+    console.log(" Inserting restaurants...");
     const createdRestaurants = await sellerModel.insertMany(sampleRestaurants);
-    console.log(`   ✅ Inserted ${createdRestaurants.length} restaurants`);
+    console.log(`    Inserted ${createdRestaurants.length} restaurants`);
 
     // Insert foods for each restaurant
-    console.log("🍽️ Inserting foods...");
+    console.log("️ Inserting foods...");
     let totalFoods = 0;
     const allFoodDocs = [];
 
@@ -322,14 +322,14 @@ async function seed({ withReviews = true } = {}) {
       await foodModel.insertMany(foodDocuments);
       allFoodDocs.push(...foodDocuments);
       totalFoods += foodDocuments.length;
-      console.log(`   ✅ ${restaurant.storeName}: ${foodDocuments.length} foods`);
+      console.log(`    ${restaurant.storeName}: ${foodDocuments.length} foods`);
     }
 
     // Create demo users
-    console.log("👥 Creating demo users...");
+    console.log(" Creating demo users...");
     const users = generateDemoUsers(20);
     const createdUsers = await userModel.insertMany(users);
-    console.log(`   ✅ Created ${createdUsers.length} users`);
+    console.log(`    Created ${createdUsers.length} users`);
 
     // Generate reviews
     let totalReviews = 0;
@@ -374,11 +374,11 @@ async function seed({ withReviews = true } = {}) {
       if (reviewsToInsert.length) {
         await ratingModel.insertMany(reviewsToInsert);
         totalReviews = reviewsToInsert.length;
-        console.log(`   ✅ Inserted ${totalReviews} reviews`);
+        console.log(`    Inserted ${totalReviews} reviews`);
       }
 
       // Recalculate rating averages for each food
-      console.log("📊 Updating food rating averages...");
+      console.log(" Updating food rating averages...");
       for (const food of allFoods) {
         const agg = await ratingModel.aggregate([
           { $match: { foodID: food.foodID } },
@@ -395,24 +395,24 @@ async function seed({ withReviews = true } = {}) {
           );
         }
       }
-      console.log("   ✅ Food ratings updated");
+      console.log("    Food ratings updated");
     }
 
     // Summary
-    console.log("\n🎉 Seeding complete!");
+    console.log("\n Seeding complete!");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log(`   📍 Restaurants: ${createdRestaurants.length}`);
-    console.log(`   🍽️  Foods: ${totalFoods}`);
-    console.log(`   👥 Demo Users: ${createdUsers.length}`);
+    console.log(`    Restaurants: ${createdRestaurants.length}`);
+    console.log(`   ️  Foods: ${totalFoods}`);
+    console.log(`    Demo Users: ${createdUsers.length}`);
     console.log(`   ⭐ Reviews: ${totalReviews}`);
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     await mongoose.disconnect();
-    console.log("\n✅ Disconnected from MongoDB. Done!");
+    console.log("\n Disconnected from MongoDB. Done!");
     process.exit(0);
 
   } catch (error) {
-    console.error("❌ Seed failed:", error);
+    console.error(" Seed failed:", error);
     await mongoose.disconnect();
     process.exit(1);
   }

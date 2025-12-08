@@ -194,10 +194,10 @@ async function seedDatabase() {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/eatify");
-    console.log("✅ Connected to MongoDB");
+    console.log(" Connected to MongoDB");
 
     // Clear existing data (optional - comment out if you want to keep existing data)
-    console.log("🗑️ Clearing existing food and seller data...");
+    console.log("️ Clearing existing food and seller data...");
     await foodModel.deleteMany({});
     await sellerModel.deleteMany({ sellerID: { $in: restaurants.map(r => r.sellerID) } });
 
@@ -213,17 +213,17 @@ async function seedDatabase() {
           role: "seller"
         });
         await sellerUser.save();
-        console.log(`👤 Created seller user: ${restaurant.userID}`);
+        console.log(` Created seller user: ${restaurant.userID}`);
       }
     }
 
     // Insert restaurants (sellers)
-    console.log("🏪 Inserting restaurants...");
+    console.log(" Inserting restaurants...");
     const insertedRestaurants = await sellerModel.insertMany(restaurants);
-    console.log(`✅ Inserted ${insertedRestaurants.length} restaurants`);
+    console.log(` Inserted ${insertedRestaurants.length} restaurants`);
 
     // Insert foods for each restaurant
-    console.log("🍽️ Inserting foods...");
+    console.log("️ Inserting foods...");
     let totalFoods = 0;
 
     for (const restaurant of restaurants) {
@@ -245,17 +245,17 @@ async function seedDatabase() {
 
       await foodModel.insertMany(foodDocuments);
       totalFoods += foodDocuments.length;
-      console.log(`  ✅ ${restaurant.storeName}: ${foodDocuments.length} foods`);
+      console.log(`   ${restaurant.storeName}: ${foodDocuments.length} foods`);
     }
 
-    console.log(`\n🎉 Seeding completed!`);
-    console.log(`   📊 Total restaurants: ${restaurants.length}`);
-    console.log(`   📊 Total foods: ${totalFoods}`);
-    console.log(`   📊 Average foods per restaurant: ${totalFoods / restaurants.length}`);
+    console.log(`\n Seeding completed!`);
+    console.log(`    Total restaurants: ${restaurants.length}`);
+    console.log(`    Total foods: ${totalFoods}`);
+    console.log(`    Average foods per restaurant: ${totalFoods / restaurants.length}`);
 
     process.exit(0);
   } catch (error) {
-    console.error("❌ Seeding failed:", error);
+    console.error(" Seeding failed:", error);
     process.exit(1);
   }
 }

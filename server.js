@@ -11,6 +11,7 @@ console.log(">>> DEBUG: MONGO_URI =", process.env.MONGO_URI);
 
 import { connectDB } from "./config/db.js";
 import { swaggerDocs } from "./swagger.js";
+import { initEmailProvider } from "./providers/emailProvider.js";
 
 // Import routes
 import foodRouter from "./routes/foodRoute.js";
@@ -56,6 +57,9 @@ app.options("*", cors(corsOptions));
 // Connect to MongoDB
 connectDB();
 
+// Initialize Email Provider
+initEmailProvider();
+
 // Root endpoint
 app.get("/", (req, res) => {
   res.send("API is running...");
@@ -82,6 +86,6 @@ swaggerDocs(app);
 
 // Start server
 app.listen(port, () => {
-  console.log(`✅ Server started on http://localhost:${port}`);
-  console.log(`📚 API Docs available at http://localhost:${port}/api-docs`);
+  console.log(` Server started on http://localhost:${port}`);
+  console.log(` API Docs available at http://localhost:${port}/api-docs`);
 });

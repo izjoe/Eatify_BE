@@ -17,11 +17,11 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid Credentials" });
     }
     
-    // ✅ Ensure role is valid
+    //  Ensure role is valid
     const userRole = (user.role === "seller" || user.role === "buyer") ? user.role : "buyer";
     const token = createToken(user._id);
     
-    console.log("✅ Login successful:", { email, role: userRole });
+    console.log(" Login successful:", { email, role: userRole });
     
     // return basic user data so frontend can prefill profile
     const userData = {
@@ -49,7 +49,7 @@ const loginUser = async (req, res) => {
       data: userData 
     });
   } catch (error) {
-    console.log("❌ Login error:", error);
+    console.log(" Login error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -119,9 +119,9 @@ const registerUser = async (req, res) => {
     const userID = "U" + Date.now();
     const userName = email.split('@')[0] + "_" + Date.now();
     
-    // ✅ Validate and set role (buyer or seller)
+    //  Validate and set role (buyer or seller)
     const userRole = (role === "seller" || role === "buyer") ? role : "buyer";
-    console.log("📝 Register:", { email, userRole });
+    console.log(" Register:", { email, userRole });
 
     const newUser = new userModel({
       userID,
@@ -130,7 +130,7 @@ const registerUser = async (req, res) => {
       displayName: displayName || name, // Lưu displayName, fallback về name
       email: email,
       password: hashedPassword,
-      role: userRole,  // ✅ Save role from request
+      role: userRole,  //  Save role from request
       profileCompleted: false, // Mặc định chưa hoàn thành profile
       onboardingShown: false, // Chưa show onboarding
       ...(phoneNumber !== undefined ? { phoneNumber } : {}),
@@ -140,9 +140,9 @@ const registerUser = async (req, res) => {
 
     const user = await newUser.save();
     
-    console.log("✅ User registered:", { userID, email, role: user.role });
+    console.log(" User registered:", { userID, email, role: user.role });
     
-    // ✅ Return 201 WITHOUT token - user must login
+    //  Return 201 WITHOUT token - user must login
     res.status(201).json({ 
       success: true, 
       msg: "Registration successful. Please login.",
@@ -151,7 +151,7 @@ const registerUser = async (req, res) => {
       role: user.role
     });
   } catch (error) {
-    console.log("❌ Register error:", error);
+    console.log(" Register error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -159,7 +159,7 @@ const registerUser = async (req, res) => {
 // get user profile (protected)
 const getProfile = async (req, res) => {
   try {
-    // ✅ Lấy userId từ req.userId (set bởi auth middleware) hoặc fallback sang req.body.userId
+    //  Get userId from req.userId (set by auth middleware) or fallback to req.body.userId
     const userId = req.userId || req.body.userId;
     const user = await userModel.findById(userId).select("-password");
     if (!user) return res.json({ success: false, message: "User not found" });
@@ -184,7 +184,7 @@ const getProfile = async (req, res) => {
 // update user profile (protected)
 const updateProfile = async (req, res) => {
   try {
-    // ✅ Lấy userId từ req.userId (set bởi auth middleware) hoặc fallback sang req.body.userId
+    //  Get userId from req.userId (set by auth middleware) or fallback to req.body.userId
     const userId = req.userId || req.body.userId;
     
     if (!userId) {
@@ -269,7 +269,7 @@ const updateProfile = async (req, res) => {
 // Admin: Update user's role (admin only)
 const adminUpdateRole = async (req, res) => {
   try {
-    // ✅ Lấy userId từ req.userId (admin's ID từ auth middleware)
+    //  Get userId from req.userId (admin's ID from auth middleware)
     const userId = req.userId || req.body.userId;
     const { targetUserId, newRole } = req.body;
 
@@ -324,7 +324,7 @@ const adminUpdateRole = async (req, res) => {
 // Admin: Update any user's profile (admin only)
 const adminUpdateUser = async (req, res) => {
   try {
-    // ✅ Lấy userId từ req.userId (admin's ID từ auth middleware)
+    //  Get userId from req.userId (admin's ID from auth middleware)
     const userId = req.userId || req.body.userId;
     const { targetUserId, ...updateFields } = req.body;
 
