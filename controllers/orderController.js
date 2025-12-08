@@ -59,13 +59,14 @@ export const checkoutOrder = async (req, res) => {
 
       orderItems.push({
         foodID: cartItem.foodID,
+        sellerID: food.sellerID, // ✅ FIX: Add sellerID from food
         foodName: food.foodName,
         quantity: cartItem.quantity,
         price: food.price
       });
     }
 
-    const order = new orderModel({
+    const orderData = {
       orderID: "O" + Date.now(),
       userID,
       items: orderItems,
@@ -74,19 +75,30 @@ export const checkoutOrder = async (req, res) => {
       phone: user.phoneNumber,
       isPaid: false,
       orderStatus: "pending"
-    });
+    };
 
+    console.log("🛒 Creating order with data:", JSON.stringify(orderData, null, 2));
+
+    const order = new orderModel(orderData);
+
+    console.log("💾 Saving order to database...");
     await order.save();
+    console.log("✅ Order saved successfully:", order.orderID);
 
     // Clear cart after checkout
     cart.items = [];
     await cart.save();
+    console.log("🗑️  Cart cleared for user:", userID);
 
     res.json({ success: true, message: "Order placed successfully.", orderID: order.orderID, totalPrice });
 
   } catch (error) {
-    console.error(error);
-    res.json({ success: false, message: "Error placing order." });
+    console.error("❌ Error placing order:", error);
+    console.error("Error details:", error.message);
+    if (error.errors) {
+      console.error("Validation errors:", error.errors);
+    }
+    res.json({ success: false, message: "Error placing order.", error: error.message });
   }
 };
 
