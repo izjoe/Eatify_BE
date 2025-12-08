@@ -1,16 +1,26 @@
-# 🍔 Eatify Backend API# Eatify_BE
+# 🍔 Eatify Backend API
 
 # ⚙️ Eatify - Backend
 
 > A secure and scalable RESTful API for food delivery platform built with Node.js, Express, and MongoDB.
 
-This is the server-side API for the Eatify food ordering application, built with **Node.js**, **Express**, and **MongoDB**.
+This is the server-side API for the Eatify food ordering application, built with **Node.js**, **Express**, and **MongoDB**. It provides a RESTful API for handling all business logic, including user authentication, database management (users, food, restaurants), and order processing.
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-
-[![MongoDB](https://img.shields.io/badge/MongoDB-6+-green.svg)](https://www.mongodb.com/)It provides a RESTful API for handling all business logic, including user authentication, database management (users, food, restaurants), and order processing.
-
+[![MongoDB](https://img.shields.io/badge/MongoDB-6+-green.svg)](https://www.mongodb.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+## 🌐 Production Server
+
+**API Base URL:** https://eatify-be.onrender.com
+
+**API Documentation:** https://eatify-be.onrender.com/api-docs
+
+## 📚 Quick Links for Frontend Developers
+
+- **[API Authentication Guide](./API_AUTHENTICATION.md)** - Complete authentication flow
+- **[Frontend Integration Guide](./FRONTEND_INTEGRATION.md)** - Code examples and troubleshooting
+- **[Test API Script](./test-api.sh)** - Automated API testing
 
 ## ✨ Core Features
 

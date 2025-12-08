@@ -100,6 +100,8 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log("🔵 Auth login attempt:", { email, passwordLength: password?.length });
+
     // Validate input
     if (!email || !password) {
       return res.status(400).json({ msg: "Email and password are required" });
@@ -107,12 +109,18 @@ export const loginUser = async (req, res) => {
 
     const user = await userModel.findOne({ email });
     if (!user) {
+      console.log("❌ Auth: User not found:", email);
       // Don't reveal whether user exists or not
       return res.status(401).json({ msg: "Invalid credentials" });
     }
 
+    console.log("✅ Auth: User found:", { email, role: user.role, hasPassword: !!user.password });
+
     const matched = await bcrypt.compare(password, user.password);
+    console.log("🔐 Auth: Password match:", matched);
+    
     if (!matched) {
+      console.log("❌ Auth: Invalid password for:", email);
       return res.status(401).json({ msg: "Invalid credentials" });
     }
 

@@ -89,8 +89,17 @@ router.post("/register", validate(registerSchema), registerUser);
  * @swagger
  * /api/auth/login:
  *   post:
- *     summary: Login user
+ *     summary: Login user and receive JWT token
  *     tags: [Auth]
+ *     description: |
+ *       Authenticate user with email and password. Returns a JWT token that must be included 
+ *       in the Authorization header for protected routes.
+ *       
+ *       **How to use the token:**
+ *       1. Copy the token from the response
+ *       2. Click the "Authorize" button at the top of this page
+ *       3. Enter: `Bearer <your-token-here>`
+ *       4. Click "Authorize" to authenticate all subsequent requests
  *     requestBody:
  *       required: true
  *       content:
@@ -109,10 +118,50 @@ router.post("/register", validate(registerSchema), registerUser);
  *               password:
  *                 type: string
  *                 example: Password123
- *                 description: User password
+ *                 description: User password (min 8 chars, must contain uppercase, lowercase, and numbers)
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: Login successful - Returns JWT token and user information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 msg:
+ *                   type: string
+ *                   example: Login successful
+ *                 token:
+ *                   type: string
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                   description: JWT token - Use this in Authorization header as "Bearer <token>"
+ *                 role:
+ *                   type: string
+ *                   example: buyer
+ *                   enum: [buyer, seller, admin]
+ *                   description: User role
+ *                 userID:
+ *                   type: string
+ *                   example: U1234567890_abc123
+ *                 name:
+ *                   type: string
+ *                   example: John Doe
+ *                 displayName:
+ *                   type: string
+ *                   example: Johnny
+ *                 email:
+ *                   type: string
+ *                   example: john@example.com
+ *                 profileCompleted:
+ *                   type: boolean
+ *                   example: false
+ *                 onboardingShown:
+ *                   type: boolean
+ *                   example: false
+ *       400:
+ *         description: Bad request - Email and password are required
  *         content:
  *           application/json:
  *             schema:
@@ -120,21 +169,27 @@ router.post("/register", validate(registerSchema), registerUser);
  *               properties:
  *                 msg:
  *                   type: string
- *                   example: Login success
- *                 token:
- *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
- *                 role:
- *                   type: string
- *                   example: user
- *                 userID:
- *                   type: string
- *                   example: U1234567890_abc123
- *                 name:
- *                   type: string
- *                   example: John Doe
+ *                   example: Email and password are required
  *       401:
- *         description: Invalid credentials
+ *         description: Unauthorized - Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 msg:
+ *                   type: string
+ *                   example: Invalid credentials
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 msg:
+ *                   type: string
+ *                   example: Server error during login
  */
 router.post("/login", validate(loginSchema), loginUser);
 

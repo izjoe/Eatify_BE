@@ -7,13 +7,23 @@ import validator from "validator";
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
+  
+  console.log("🔵 Login attempt:", { email, passwordLength: password?.length });
+  
   try {
     const user = await userModel.findOne({ email });
     if (!user) {
+      console.log("❌ User not found:", email);
       return res.status(401).json({ success: false, message: "User Doesn't exist" });
     }
+    
+    console.log("✅ User found:", { email, role: user.role, hasPassword: !!user.password });
+    
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log("🔐 Password match:", isMatch);
+    
     if (!isMatch) {
+      console.log("❌ Invalid password for:", email);
       return res.status(401).json({ success: false, message: "Invalid Credentials" });
     }
     
