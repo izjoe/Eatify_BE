@@ -40,18 +40,29 @@ const corsOptions = {
       return callback(null, true);
     }
 
+    // Allow Render.com domains (for Swagger UI)
+    if (origin && origin.includes('.onrender.com')) {
+      return callback(null, true);
+    }
+
     // Allow configured frontend URL (supports production frontend)
     const frontendUrl = process.env.FRONTEND_URL || "https://eatify-fe.vercel.app";
     if (origin === frontendUrl) return callback(null, true);
 
-    // Optionally allow the known deployed domain explicitly
+    // Allow the known deployed domain explicitly
     if (origin === "https://eatify-fe.vercel.app") return callback(null, true);
 
+    // Allow Vercel preview deployments
+    if (origin && origin.includes('.vercel.app')) {
+      return callback(null, true);
+    }
+
+    console.log('❌ CORS blocked origin:', origin);
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "token"]
+  allowedHeaders: ["Content-Type", "Authorization", "token", "accept"]
 };
 
 app.use(express.json({ limit: '50mb' }));
