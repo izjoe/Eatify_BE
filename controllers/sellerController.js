@@ -58,9 +58,12 @@ export const getSellerDetail = async (req, res) => {
 };
 
 // List all sellers (with basic info)
+// Shows sample stores (isComplete undefined) + completed registrations (isComplete true)
+// Hides incomplete registrations (isComplete false)
 export const listSellers = async (req, res) => {
   try {
-    const sellers = await sellerModel.find({});
+    // Query: isComplete is NOT false (includes undefined/null for sample data and true for completed)
+    const sellers = await sellerModel.find({ isComplete: { $ne: false } });
     res.json({ success: true, data: sellers });
   } catch (error) {
     console.error(error);
