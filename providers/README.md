@@ -1,11 +1,11 @@
 # Email Provider - Nodemailer Integration
 
-## Mô tả
-Module này cung cấp chức năng gửi email thông qua SMTP sử dụng thư viện `nodemailer`.
+## Description
+This module provides SMTP email sending using `nodemailer`.
 
-## Cấu hình
+## Configuration
 
-Thêm các biến môi trường sau vào file `.env`:
+Add the following environment variables to your `.env` file:
 
 ```env
 SMTP_HOST=smtp.gmail.com
@@ -13,30 +13,30 @@ SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASS=your_app_password
 SMTP_FROM="Eatify <noreply@eatify.com>"
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=https://eatify-fe.vercel.app
 ```
 
-### Cấu hình Gmail SMTP
+### Gmail SMTP setup
 
-1. Bật **2-Step Verification** trong Google Account
-2. Truy cập: https://myaccount.google.com/apppasswords
-3. Tạo **App Password** mới cho ứng dụng
-4. Copy password (16 ký tự) vào `SMTP_PASS`
-5. Sử dụng các giá trị:
-   - `SMTP_HOST=smtp.gmail.com`
-   - `SMTP_PORT=587`
-   - `SMTP_USER=your_gmail@gmail.com`
+1. Enable **2-Step Verification** in your Google Account
+2. Go to: https://myaccount.google.com/apppasswords
+3. Create an **App Password** for the application
+4. Copy the generated password into `SMTP_PASS`
+5. Use the following values:
+  - `SMTP_HOST=smtp.gmail.com`
+  - `SMTP_PORT=587`
+  - `SMTP_USER=your_gmail@gmail.com`
 
-### Test với Ethereal Email (Fake SMTP)
+### Test with Ethereal Email (fake SMTP)
 
-Để test không cần Gmail thật:
+To test without a real Gmail account:
 
-1. Truy cập: https://ethereal.email/create
-2. Lấy thông tin SMTP được tạo tự động
-3. Cập nhật `.env` với thông tin đó
-4. Xem email đã gửi tại: https://ethereal.email/messages
+1. Visit: https://ethereal.email/create
+2. Copy the generated SMTP credentials
+3. Update your `.env` with those credentials
+4. Inspect sent messages at: https://ethereal.email/messages
 
-## Sử dụng
+## Usage
 
 ### Import
 
@@ -44,7 +44,7 @@ FRONTEND_URL=http://localhost:3000
 import { sendEmail, getWelcomeEmailTemplate, getResetPasswordEmailTemplate } from "./providers/emailProvider.js";
 ```
 
-### Gửi email đơn giản
+### Send a simple email
 
 ```javascript
 await sendEmail({
@@ -55,7 +55,7 @@ await sendEmail({
 });
 ```
 
-### Gửi Welcome Email
+### Send Welcome Email
 
 ```javascript
 const emailTemplate = getWelcomeEmailTemplate("John Doe", "john@example.com");
@@ -68,7 +68,7 @@ await sendEmail({
 });
 ```
 
-### Gửi Reset Password Email
+### Send Reset Password Email
 
 ```javascript
 const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=abc123`;
@@ -85,16 +85,16 @@ await sendEmail({
 ## API Functions
 
 ### `initEmailProvider()`
-Khởi tạo email provider khi server start. Được gọi tự động trong `server.js`.
+Initialize email provider when the server starts. Called automatically from `server.js`.
 
 ### `sendEmail(options)`
-Gửi email với các tùy chọn:
-- `to` (string): Email người nhận
-- `subject` (string): Tiêu đề email
-- `text` (string, optional): Nội dung plain text
-- `html` (string): Nội dung HTML
+Send an email with the following options:
+- `to` (string): Recipient email
+- `subject` (string): Email subject
+- `text` (string, optional): Plain text content
+- `html` (string): HTML content
 
-**Returns:** Promise với kết quả `{ success, messageId, response }` hoặc `{ success: false, error }`
+**Returns:** Promise resolving to `{ success, messageId, response }` or `{ success: false, error }`
 
 ### `getWelcomeEmailTemplate(name, email)`
 Tạo template cho email chào mừng khi đăng ký.
@@ -114,41 +114,42 @@ Tạo template cho email reset password.
 
 **Returns:** Object với `{ subject, text, html }`
 
-## Lưu ý
+## Notes
 
-- Nếu không cấu hình SMTP, email sẽ không được gửi (không gây lỗi server)
-- Email được gửi async, không block response
-- Lỗi gửi email chỉ được log, không ảnh hưởng đến logic chính
-- Sử dụng TLS/STARTTLS cho port 587, SSL cho port 465
+- If SMTP is not configured, emails will be skipped (does not crash the server)
+- Emails are sent asynchronously and do not block responses
+- Errors while sending are logged but do not affect main logic
+- Use TLS/STARTTLS for port 587, SSL for port 465
 
 ## Testing
 
-Để test email trong môi trường dev, có thể:
+To test emails in development:
 
-1. **Sử dụng Ethereal Email** (recommended cho dev):
-   ```
-   https://ethereal.email/create
-   ```
+1. **Use Ethereal Email** (recommended for dev):
+  ```
+  https://ethereal.email/create
+  ```
 
-2. **Sử dụng Gmail với App Password**
+2. **Use Gmail with App Password**
 
-3. **Sử dụng Mailtrap** (dev SMTP service):
-   ```
-   https://mailtrap.io
-   ```
+3. **Use Mailtrap** (developer SMTP service):
+  ```
+  https://mailtrap.io
+  ```
 
 ## Troubleshooting
 
-### Lỗi: "Invalid login"
-- Kiểm tra SMTP_USER và SMTP_PASS
-- Với Gmail: đảm bảo đã tạo App Password
-- Với Gmail: bật 2-Step Verification
+### Errors and troubleshooting
 
-### Lỗi: "Connection timeout"
-- Kiểm tra SMTP_HOST và SMTP_PORT
-- Kiểm tra firewall/network blocking port 587/465
+#### "Invalid login"
+- Check `SMTP_USER` and `SMTP_PASS`
+- For Gmail: ensure you created an App Password and enabled 2-Step Verification
 
-### Email không được gửi
-- Kiểm tra console log để xem thông báo lỗi
-- Xác minh tất cả biến môi trường SMTP đã được set
-- Test với Ethereal Email trước khi dùng Gmail thật
+#### "Connection timeout"
+- Verify `SMTP_HOST` and `SMTP_PORT`
+- Check firewall/network blocking ports 587/465
+
+#### Emails not being delivered
+- Inspect console logs for error details
+- Ensure SMTP environment variables are set
+- Test with Ethereal Email before using a real SMTP

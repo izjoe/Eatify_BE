@@ -34,12 +34,19 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
-    
-    // Allow localhost on any port
+
+    // Allow requests from development localhost
     if (origin.match(/^http:\/\/localhost:\d+$/) || origin.match(/^http:\/\/127\.0\.0\.1:\d+$/)) {
       return callback(null, true);
     }
-    
+
+    // Allow configured frontend URL (supports production frontend)
+    const frontendUrl = process.env.FRONTEND_URL || "https://eatify-fe.vercel.app";
+    if (origin === frontendUrl) return callback(null, true);
+
+    // Optionally allow the known deployed domain explicitly
+    if (origin === "https://eatify-fe.vercel.app") return callback(null, true);
+
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -84,8 +91,14 @@ app.use("/uploads", express.static("uploads")); // Serve all uploads including a
 // Swagger documentation
 swaggerDocs(app);
 
-// Start server
-app.listen(port, () => {
-  console.log(` Server started on http://localhost:${port}`);
-  console.log(` API Docs available at http://localhost:${port}/api-docs`);
-});
+// Start server (only in non-serverless environments)
+// Vercel will handle the server automatically
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`Server started on http://localhost:${port}`);
+    console.log(`API Docs available at http://localhost:${port}/api-docs`);
+  });
+}
+
+// Export for Vercel serverless
+export default app;

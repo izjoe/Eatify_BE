@@ -165,7 +165,7 @@ export const getWelcomeEmailTemplate = (name, email) => {
             </ul>
             
             <center>
-              <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login" class="button">
+              <a href="${process.env.FRONTEND_URL || 'https://eatify-fe.vercel.app'}/login" class="button">
                 Đăng nhập ngay
               </a>
             </center>
