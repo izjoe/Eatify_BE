@@ -4,6 +4,106 @@ import foodModel from "../models/foodModel.js";
 import ratingModel from "../models/ratingModel.js";
 import userModel from "../models/userModel.js";
 
+// Get current seller's store info (for logged-in seller)
+export const getMyStore = async (req, res) => {
+  try {
+    const userId = req.userId || req.body.userId; // from auth middleware
+
+    // Get user's userID from the database
+    const user = await userModel.findOne({ _id: userId });
+    if (!user) return res.json({ success: false, message: "User not found" });
+    
+    if (user.role !== "seller" && user.role !== "admin") {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Access denied. Seller privileges required." 
+      });
+    }
+    
+    const userID = user.userID;
+    const seller = await sellerModel.findOne({ userID });
+    
+    if (!seller) {
+      return res.json({ success: false, message: "Store not found", data: null });
+    }
+
+    res.json({ success: true, data: seller });
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: "Error fetching store info." });
+  }
+};
+
+// Create or update seller store (with file upload support)
+export const createOrUpdateStore = async (req, res) => {
+  try {
+    const userId = req.userId || req.body.userId; // from auth middleware
+    const { storeName, storeDescription, storeAddress, categories, openTime, closeTime } = req.body;
+
+    // Get user info
+    const user = await userModel.findOne({ _id: userId });
+    if (!user) return res.json({ success: false, message: "User not found" });
+    
+    if (user.role !== "seller" && user.role !== "admin") {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Access denied. Seller privileges required." 
+      });
+    }
+    
+    const userID = user.userID;
+
+    // Find existing seller or create new
+    let seller = await sellerModel.findOne({ userID });
+    
+    if (!seller) {
+      // Create new seller record
+      const lastSeller = await sellerModel.findOne().sort({ sellerID: -1 });
+      const newSellerID = lastSeller ? lastSeller.sellerID + 1 : 1;
+      
+      seller = new sellerModel({
+        sellerID: newSellerID,
+        userID: userID,
+        storeName: storeName || "",
+        storeDescription: storeDescription || "",
+        storeAddress: storeAddress || "",
+        categories: categories ? (typeof categories === 'string' ? JSON.parse(categories) : categories) : [],
+        openTime: openTime || "08:00",
+        closeTime: closeTime || "22:00",
+        isComplete: false
+      });
+    } else {
+      // Update existing
+      if (storeName !== undefined) seller.storeName = storeName;
+      if (storeDescription !== undefined) seller.storeDescription = storeDescription;
+      if (storeAddress !== undefined) seller.storeAddress = storeAddress;
+      if (categories !== undefined) {
+        seller.categories = typeof categories === 'string' ? JSON.parse(categories) : categories;
+      }
+      if (openTime !== undefined) seller.openTime = openTime;
+      if (closeTime !== undefined) seller.closeTime = closeTime;
+    }
+
+    // Handle file upload (storeImage)
+    if (req.file) {
+      // Convert to base64 for storage
+      const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+      seller.storeImage = base64Image;
+    }
+
+    // Check completeness
+    const isComplete = seller.storeName && seller.storeAddress && seller.storeImage;
+    seller.isComplete = !!isComplete;
+
+    await seller.save();
+
+    res.json({ success: true, message: "Store saved successfully.", data: seller });
+  } catch (error) {
+    console.error("Create/Update store error:", error);
+    res.json({ success: false, message: "Error saving store info." });
+  }
+};
+
 // Get seller detail (including foods + average rating)
 export const getSellerDetail = async (req, res) => {
   try {

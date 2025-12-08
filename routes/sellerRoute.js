@@ -1,5 +1,6 @@
 // routes/sellerRoute.js
 import express from "express";
+import multer from "multer";
 import auth from "../middleware/authMiddleware.js";
 import { validate } from "../middleware/validateMiddleware.js";
 import { updateSellerSchema } from "../validations/sellerValidation.js";
@@ -7,11 +8,20 @@ import { requireSeller } from "../middleware/accessControlMiddleware.js";
 import {
   getSellerDetail,
   listSellers,
-  updateSellerInfo
+  updateSellerInfo,
+  getMyStore,
+  createOrUpdateStore
 } from "../controllers/sellerController.js";
 import { getRestaurantFoods } from "../controllers/foodController.js";
 
 const sellerRouter = express.Router();
+
+// Multer config for store image upload (memory storage for base64)
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 /**
  * @swagger
@@ -19,6 +29,55 @@ const sellerRouter = express.Router();
  *   - name: Seller
  *     description: Seller information APIs
  */
+
+/**
+ * @swagger
+ * /api/seller/store/me:
+ *   get:
+ *     summary: Get current seller's store info
+ *     tags: [Seller]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Store info fetched successfully
+ */
+sellerRouter.get("/store/me", auth, requireSeller, getMyStore);
+
+/**
+ * @swagger
+ * /api/seller/store:
+ *   post:
+ *     summary: Create or update seller's store
+ *     tags: [Seller]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               storeName:
+ *                 type: string
+ *               storeDescription:
+ *                 type: string
+ *               storeAddress:
+ *                 type: string
+ *               storeImage:
+ *                 type: string
+ *                 format: binary
+ *               categories:
+ *                 type: string
+ *               openTime:
+ *                 type: string
+ *               closeTime:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Store saved successfully
+ */
+sellerRouter.post("/store", auth, requireSeller, upload.single('storeImage'), createOrUpdateStore);
 
 /**
  * @swagger
